@@ -1,0 +1,45 @@
+# This file contains configuration options for GolangCI-Lint.
+#
+# - Version: golangci-lint @latest (currntly: v1.50.1)
+# - Note:
+#     Usually, it is not recommended to use the latest version of `golangci-lint`.
+#     However, in our case, we use the latest version to ensure that the linter
+#     configuration is always up-to-date by running the test periodically in CI.
+# - Available linters see: https://golangci-lint.run/usage/linters/
+
+# options for analysis running
+run:
+  tests: true
+  fast: true
+  build-tags:
+    - golangci
+  skip-dirs:
+    - .github
+  allow-parallel-runners: true
+
+output:
+  format: colored-line-number
+  sort-results: true
+
+linters:
+  enable-all: true
+  disable:
+  # Deprecated linters
+  - exhaustivestruct
+  - nosnakecase
+  - ifshort
+  - interfacer
+  - scopelint
+  - deadcode
+  - structcheck
+  - golint
+  - maligned
+  - varcheck
+  # Allow test packages without "_test" suffix due to testing private functions
+  - testpackage
+
+linters-settings:
+  funlen:
+    # Checks the number of lines in a function.
+    # Default: 60
+    lines: 70
