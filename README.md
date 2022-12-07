@@ -1,3 +1,7 @@
+<!-- markdownlint-disable MD001 MD041 MD050 -->
+[![go1.16+](https://img.shields.io/badge/Go-1.16--latest-blue?logo=go)](https://github.com/KEINOS/go-countline/blob/main/.github/workflows/version-tests.yaml "Supported versions")
+[![Go Reference](https://pkg.go.dev/badge/github.com/KEINOS/go-countline.svg)](https://pkg.go.dev/github.com/KEINOS/go-countline#section-documentation "Read generated documentation of the app")
+
 # go-countline
 
 Go package "[go-countline](https://github.com/KEINOS/go-countline/cl)" does nothing more than **count the number of lines in a file**, but it tries to count as fast as possible.
@@ -51,7 +55,7 @@ func ExampleCountLines() {
 
 ## Benchmark Status
 
-Benchmark of counting 1 GiB of file size (72,323,529 lines) on MacBook Pro (Retina, 13-inch, Early 2015, 2.7 GHz Intel Core i5).
+Benchmark of counting 1 GiB of file size (72,323,529 lines) on MacBook Pro (Retina, 13-inch, Early 2015, 2.7 GHz Intel Core i5, 4 core).
 
 ```shellsession
 $ go test -benchmem -count 10 -run=^$ -bench BenchmarkCountLines ./... > bench.txt && benchstat bench.txt
@@ -129,11 +133,24 @@ func BenchmarkCountLines(b *testing.B) {
 
 ## Contributing
 
+### Statuses
+
+[![Go 1.16~latest](https://github.com/KEINOS/go-countline/actions/workflows/version-tests.yaml/badge.svg)](https://github.com/KEINOS/go-countline/actions/workflows/version-tests.yaml)
+[![Test on macOS/Win/Linux](https://github.com/KEINOS/go-countline/actions/workflows/platform-test.yaml/badge.svg)](https://github.com/KEINOS/go-countline/actions/workflows/platform-test.yaml)
+[![golangci-lint](https://github.com/KEINOS/go-countline/actions/workflows/golangci-lint.yaml/badge.svg)](https://github.com/KEINOS/go-countline/actions/workflows/golangci-lint.yaml)
+
+[![codecov](https://codecov.io/gh/KEINOS/go-countline/branch/main/graph/badge.svg?token=St2W66wHNQ)](https://codecov.io/gh/KEINOS/go-countline)
+[![Go Report Card](https://goreportcard.com/badge/github.com/KEINOS/go-countline)](https://goreportcard.com/report/github.com/KEINOS/go-countline)
+[![CodeQL](https://github.com/KEINOS/go-countline/actions/workflows/codeQL-analysis.yaml/badge.svg)](https://github.com/KEINOS/go-countline/actions/workflows/codeQL-analysis.yaml)
+
+### Contribute
+
 **If you have found a faster way** to count the number of lines in a file, feel free to contribute!
 
-As long as the new function passes the test, it is merged. It then will be replaced to the main fucntion in the next release after review by the contributors.
+As long as the new function passes the test, it is merged. It then will be replaced to the main fucntion in the next release after the review by the contributors.
 
-- Issues: Please provide a reproducible code snippet.
-- Pull requests
+- [Issues](https://github.com/KEINOS/go-countline/issues): [![Issues](https://img.shields.io/github/issues/KEINOS/go-countline)](https://github.com/KEINOS/go-countline/issues)
+  - Please provide a reproducible code snippet.
+- Pull requests: [![Pull Requests](https://img.shields.io/github/issues-pr/KEINOS/go-countline)](https://github.com/KEINOS/go-countline/pulls)
   - Branch: `main`
-  - Any pull requests for the better is welcome.
+  - **Any pull requests for the better is welcome!**

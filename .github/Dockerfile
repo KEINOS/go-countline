@@ -18,4 +18,4 @@ RUN apk add --no-cache \
 
 WORKDIR /workspaces
 
-ENTRYPOINT make gen_data unit_test
+ENTRYPOINT make unit_test

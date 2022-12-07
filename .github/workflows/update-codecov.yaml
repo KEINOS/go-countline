@@ -1,0 +1,41 @@
+# =============================================================================
+#  Update CodeCov
+# =============================================================================
+# This Workflow to updates the coverage to CodeCov.io on release.
+name: Update codecov.io
+
+on:
+  workflow_dispatch:
+  release:
+    types:
+      - created
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 2
+
+      - uses: actions/setup-go@v3
+        with:
+          go-version: '1.19'
+          check-latest: true
+
+      - name: Create test data
+        run: |
+          go generate ./...
+
+      - name: Run coverage
+        run: |
+          go test -coverprofile=coverage.txt -covermode=atomic \
+            ./... \
+            github.com/KEINOS/go-countline/cl/_alt \
+            github.com/KEINOS/go-countline/cl/_gen \
+            github.com/KEINOS/go-countline/_example/countline
+
+      - name: Upload coverage to Codecov
+        run: bash <(curl -s https://codecov.io/bash)

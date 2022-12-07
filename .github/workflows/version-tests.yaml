@@ -1,0 +1,85 @@
+# =============================================================================
+#  Unit Tests on Go v1.16 to latest
+# =============================================================================
+# This Workflow runs unit tests on various Go versions over Docker on any push.
+# This action caches the built Docker image for a month unless any changes in
+# the Dockerfile or go.mod were made.
+name: Go 1.16~latest
+
+on:
+  workflow_dispatch:
+  push:
+
+env:
+  PATH_CACHE: /tmp/docker-img-arch
+
+jobs:
+  go:
+    name: Run tests on various Go versions via container
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Create cache ID from file hash
+        uses: KEINOS/gh-action-hash-for-cache@main
+        id: cacheid
+        # Udate the hash if any file in the path is changed or the month has changed.
+        with:
+          path: |
+            ./go.mod
+            ./.github/Dockerfile
+            ./.github/docker-compose.yml
+            ./.github/workflows/version-tests.yaml
+          variant: $(TZ=UTC-9 date '+%Y%m')
+
+      - name: Cache or restore image archive
+        id: cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.PATH_CACHE }}
+          key: ${{ steps.cacheid.outputs.hash }}
+
+      - name: Load Docker images if exist
+        if: steps.cache.outputs.cache-hit == 'true'
+        run: |
+          docker load --input ${{ env.PATH_CACHE }}/github_v1_16_1.tar
+          docker load --input ${{ env.PATH_CACHE }}/github_v1_17_1.tar
+          docker load --input ${{ env.PATH_CACHE }}/github_v1_18_1.tar
+          docker load --input ${{ env.PATH_CACHE }}/github_v1_19_1.tar
+          docker load --input ${{ env.PATH_CACHE }}/github_latest_1.tar
+
+      - name: Build Docker images if no-exists
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          : # Pull images one-by-one for stability
+          docker pull golang:1.16-alpine
+          docker pull golang:1.17-alpine
+          docker pull golang:1.18-alpine
+          docker pull golang:1.19-alpine
+          docker pull golang:alpine
+          : # Build container images
+          docker-compose --file ./.github/docker-compose.yml build
+
+      - name: Save built images if no-exists
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          : # Ensure the directory exists
+          mkdir -p ${{ env.PATH_CACHE }}
+          : # Save images to cache directory
+          docker save --output ${{ env.PATH_CACHE }}/github_v1_16_1.tar github_v1_16:latest
+          docker save --output ${{ env.PATH_CACHE }}/github_v1_17_1.tar github_v1_17:latest
+          docker save --output ${{ env.PATH_CACHE }}/github_v1_18_1.tar github_v1_18:latest
+          docker save --output ${{ env.PATH_CACHE }}/github_v1_19_1.tar github_v1_19:latest
+          docker save --output ${{ env.PATH_CACHE }}/github_latest_1.tar github_latest:latest
+
+      - name: Run tests on Go 1.16
+        run: docker-compose --file ./.github/docker-compose.yml run v1_16
+      - name: Run tests on Go 1.17
+        run: docker-compose --file ./.github/docker-compose.yml run v1_17
+      - name: Run tests on Go 1.18
+        run: docker-compose --file ./.github/docker-compose.yml run v1_18
+      - name: Run tests on Go 1.19
+        run: docker-compose --file ./.github/docker-compose.yml run v1_19
+      - name: Run tests on latest Go
+        run: docker-compose --file ./.github/docker-compose.yml run latest

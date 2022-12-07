@@ -104,10 +104,29 @@ func genFile(sizeFile int, pathFile string) error {
 			break
 		}
 
-		if totalSize%1024 == 0 {
+		if totalSize%1024 == 0 && !IsCI() {
 			fmt.Printf("  - %s, size: %d, line: %d\r", pathFile, totalSize, countLine)
 		}
 	}
 
 	return nil
+}
+
+var pathDockerEnv = filepath.Join("/", ".dockerenv")
+
+// IsCI returns true if the current process is running inside a CI environment. Such as Github Actions or Docker.
+func IsCI() bool {
+	return IsGithubActions() || IsDocker()
+}
+
+// IsDocker returns true if the current process is running inside a Docker container.
+func IsDocker() bool {
+	_, err := os.Stat(pathDockerEnv)
+
+	return err == nil
+}
+
+// IsGithubActions returns true if the current process is running inside a Github Actions.
+func IsGithubActions() bool {
+	return os.Getenv("GITHUB_ACTIONS") != ""
 }

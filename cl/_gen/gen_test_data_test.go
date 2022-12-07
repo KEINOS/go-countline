@@ -18,6 +18,17 @@ func Test_main(t *testing.T) {
 
 	defer require.NoError(t, os.Chdir(pathReturn))
 
+	// Mock the path to the Docker environment file. Due to cover the case when
+	// the tests are running in Docker.
+	if IsDocker() {
+		oldPathDockerEnv := pathDockerEnv
+		defer func() {
+			pathDockerEnv = oldPathDockerEnv
+		}()
+
+		pathDockerEnv = "/foo/bar"
+	}
+
 	// Create test data directory under temp dir
 	pathDirTemp := t.TempDir()
 
@@ -139,4 +150,21 @@ func Test_genFile_file_is_dir(t *testing.T) {
 
 	require.Error(t, err, "it should fail if the path is a directory")
 	require.Contains(t, err.Error(), "failed to open/create file", "it should contain the error reason")
+}
+
+//nolint:paralleltest // do not parallelize due to temporary changing the global variable
+func TestIsDocker(t *testing.T) {
+	oldPathDockerEnv := pathDockerEnv
+	defer func() {
+		pathDockerEnv = oldPathDockerEnv
+	}()
+
+	pathDummy := filepath.Join(t.TempDir(), "docker_env_dummy")
+	require.NoError(t, os.WriteFile(pathDummy, []byte{}, os.ModeTemporary))
+
+	// Mock the path to the Docker environment file
+	pathDockerEnv = pathDummy
+
+	// Test in Docker
+	require.True(t, IsDocker(), "it should return true if running in Docker")
 }
