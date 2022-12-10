@@ -91,45 +91,7 @@ PASS
 ok      github.com/KEINOS/go-countline/cl/spec  0.275s
 ```
 
-<details><summary><code>BenchmarkCountLines(b *testing.B)</code></summary>
-
-```go
-func BenchmarkCountLines(b *testing.B) {
-    // 1 GiB size file
-    pathFile := filepath.Join("testdata", "data_Giant.txt")
-
-    expectNumLines := 72323529
-
-    // Open file
-    fileReader, err := os.Open(pathFile)
-    if err != nil {
-        b.Fatal(err)
-    }
-
-    b.Cleanup(func() {
-        fileReader.Close()
-    })
-
-    b.ResetTimer() // Begin benchmark
-
-    // Run function
-    actualNumLines, err := cl.CountLines(fileReader)
-    if err != nil {
-        b.Fatal(err)
-    }
-
-    b.StopTimer() // End benchmark
-
-    if expectNumLines != actualNumLines {
-        b.Fatalf(
-            "test %v failed: expect=%d, actual=%d",
-            b.Name(), expectNumLines, actualNumLines,
-        )
-    }
-}
-```
-
-</details>
+- [See other alternative implementations](./cl/_alt)
 
 ## Contributing
 

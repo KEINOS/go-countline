@@ -35,6 +35,7 @@ var targetFuncions = map[string]struct {
 	"CountLinesAlt2": {_alt.CountLinesAlt2},
 	"CountLinesAlt3": {_alt.CountLinesAlt3},
 	"CountLinesAlt4": {_alt.CountLinesAlt4},
+	"CountLinesAlt5": {_alt.CountLinesAlt5},
 }
 
 // targetDatas is a list of files under `cl/testdata/` directory to be tested.
