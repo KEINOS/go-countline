@@ -11,7 +11,7 @@ You need to create and edit the following 3 files:
 
 1. Create a new file for your new implementation.
 2. Add your function to the `TestCountLines_specs` function in [`alt_test.go`](./alt_test.go).
-3. Add your function to the `targetFuncions` variable in [`../../benchmarks_test.go`](../../benchmarks_test.go).
+3. Add your function to the `targetFuncions` variable in [`../benchmarks_test.go`](../benchmarks_test.go).
 
 ### Create a file
 
@@ -50,7 +50,7 @@ func TestCountLines_specs(t *testing.T) {
 
 ### Add the function to the benchmark list
 
-- File name: `../../benchmarks_test.go`
+- File name: `../benchmarks_test.go`
 
 ```diff
 var targetFuncions = map[string]struct {
@@ -71,7 +71,7 @@ var targetFuncions = map[string]struct {
 
 You need the following to be covered in your implementation:
 
-- **Pass the tests** in all cases of `cl/spec/spec.go`.
+- **Pass the tests** in all cases of [`cl/spec/spec.go`](../spec/spec.go).
 - **Pass the lint and static analysis checks** of [golangci-lint](https://golangci-lint.run/).
   - Run: `golangci-lint run`
   - For the rules, see: [../../.golangci.yml](../../.golangci.yml)
