@@ -80,7 +80,7 @@ You need the following to be covered in your implementation:
 Use the [`make` command](https://en.wikipedia.org/wiki/Make_(software)) for convenience.
 
 ```shellsession
-$ # Runs unit tests, lints, and cove coverage.
+$ # Runs unit tests, lints, and code coverage.
 $ make test
 ...
 
