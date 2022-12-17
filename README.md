@@ -1,4 +1,4 @@
-<!-- markdownlint-disable MD001 MD041 MD050 -->
+<!-- markdownlint-disable MD001 MD041 MD050 MD033 -->
 [![go1.16+](https://img.shields.io/badge/Go-1.16--latest-blue?logo=go)](https://github.com/KEINOS/go-countline/blob/main/.github/workflows/version-tests.yaml "Supported versions")
 [![Go Reference](https://pkg.go.dev/badge/github.com/KEINOS/go-countline.svg)](https://pkg.go.dev/github.com/KEINOS/go-countline#section-documentation "Read generated documentation of the app")
 
@@ -69,6 +69,44 @@ name          allocs/op
 CountLines-4    0.00
 ```
 
+```go
+func BenchmarkCountLines(b *testing.B) {
+    // 1 GiB size file
+    pathFile := filepath.Join("testdata", "data_Giant.txt")
+
+    expectNumLines := 72323529
+
+    // Open file
+    fileReader, err := os.Open(pathFile)
+    if err != nil {
+        b.Fatal(err)
+    }
+
+    b.Cleanup(func() {
+        fileReader.Close()
+    })
+
+    b.ResetTimer() // Begin benchmark
+
+    // Run function
+    actualNumLines, err := cl.CountLines(fileReader)
+    if err != nil {
+        b.Fatal(err)
+    }
+
+    b.StopTimer() // End benchmark
+
+    if expectNumLines != actualNumLines {
+        b.Fatalf(
+            "test %v failed: expect=%d, actual=%d",
+            b.Name(), expectNumLines, actualNumLines,
+        )
+    }
+}
+```
+
+<details><summary>bench.txt</summary>
+
 ```shellsession
 $ cat bench.txt
 goos: darwin
@@ -90,6 +128,9 @@ ok      github.com/KEINOS/go-countline/cl       85.368s
 PASS
 ok      github.com/KEINOS/go-countline/cl/spec  0.275s
 ```
+
+</details>
+
 
 - [See other alternative implementations](./cl/_alt)
 
