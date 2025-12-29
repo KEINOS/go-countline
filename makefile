@@ -1,7 +1,9 @@
 # =============================================================================
 #  Makefile for testing
 # =============================================================================
-#  If you have `make` command installed, you can run the tests as below:
+#  This Makefile is for convenience to run tests.
+#
+#  You need `make` command installed, then you can run the tests as below:
 #
 #      make test ... Run unit tests, lint check, static analysis and coverage
 #                    check.
@@ -74,7 +76,7 @@ bench: gen_data
 # -----------------------------------------------------------------------------
 #  Docker installed only tests for various Go versions
 # -----------------------------------------------------------------------------
-test_docker: build_docker go1_16 go1_17 go1_18 go1_19 go_latest
+test_docker: build_docker go_min go_latest
 
 # build_docker will build docker images for testing. It will pre-pull the base
 # images for consistency.
@@ -82,38 +84,17 @@ build_docker:
 	set -eu -o pipefail
 	echo "[Building docker images]:"
 	printf "pulling ... "
-	docker pull --quiet golang:1.16-alpine
-	printf "pulling ... "
-	docker pull --quiet golang:1.17-alpine
-	printf "pulling ... "
-	docker pull --quiet golang:1.18-alpine
-	printf "pulling ... "
-	docker pull --quiet golang:1.19-alpine
+	docker pull --quiet golang:1.22-alpine
 	printf "pulling ... "
 	docker pull --quiet golang:alpine
 	printf "building images ... "
 	docker compose --file ./.github/docker-compose.yml build --progress quiet
 	echo "OK"
 
-go1_16: build_docker
-	echo "[Unit testing in Go v1.16]:"
-	docker compose --file ./.github/docker-compose.yml run v1_16 || exit 1
-	echo "ok ... Go v1.16"
-
-go1_17: build_docker
-	echo "[Unit testing in Go v1.17]:"
-	docker compose --file ./.github/docker-compose.yml run v1_17 || exit 1
-	echo "ok ... Go v1.17"
-
-go1_18: build_docker
-	echo "[Unit testing in Go v1.18]:"
-	docker compose --file ./.github/docker-compose.yml run v1_18 || exit 1
-	echo "ok ... Go v1.18"
-
-go1_19: build_docker
-	echo "[Unit testing in Go v1.19]:"
-	docker compose --file ./.github/docker-compose.yml run v1_19 || exit 1
-	echo "ok ... Go v1.19"
+go_min: build_docker
+	echo "[Unit testing in Go v1.22(min)]:"
+	docker compose --file ./.github/docker-compose.yml run min || exit 1
+	echo "ok ... Go v1.22"
 
 go_latest: build_docker
 	echo "[Unit testing in Go latest version]:"

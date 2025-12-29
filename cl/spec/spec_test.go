@@ -100,7 +100,7 @@ func Test_genOneLine(t *testing.T) {
 
 		assert.Equal(t, dataLine[0], test.expectFirst, "first char did not match.\n%s", reason)
 
-		for i := 0; i < len(dataLine)-1; i++ {
+		for i := range len(dataLine) - 1 {
 			assert.Equal(t, dataLine[i], byte('a'), "index %d should be 'a'\n%s", i, reason)
 		}
 

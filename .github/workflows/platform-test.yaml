@@ -19,26 +19,20 @@ jobs:
     runs-on: ${{ matrix.platform }}
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - uses: actions/setup-go@v3
+      - uses: actions/setup-go@v5
         with:
-          go-version: '^1.16'
-
-      - name: Use Cache
-        uses: actions/cache@v3
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
+          go-version: '1'
+          check-latest: true
 
       - name: Download Modules
-        if: steps.cache.outputs.cache-hit != 'true'
         run: go mod download
 
       - name: Run unit tests
         run: |
-          go mod download
           go generate ./...
           go test -race ./...
+
+      - name: Cleanups
+        run: rm -rf ./cl/testdata/data_*.txt

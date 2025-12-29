@@ -36,6 +36,7 @@ var targetFuncions = map[string]struct {
 	"CountLinesAlt3": {_alt.CountLinesAlt3},
 	"CountLinesAlt4": {_alt.CountLinesAlt4},
 	"CountLinesAlt5": {_alt.CountLinesAlt5},
+	"CountLinesAlt6": {_alt.CountLinesAlt6},
 }
 
 // targetDatas is a list of files under `cl/testdata/` directory to be tested.
@@ -63,16 +64,24 @@ var targetDatas = map[string]struct {
 // ============================================================================
 
 // Benchmark of 1GiB file.
+//
+// Note: This benchmark is heavy and takes a long time (a minute on average) to
+// run. This benchmark runs alternate implementations as well thus it takes even
+// longer.
 func Benchmark_giant(b *testing.B) {
-	nameFile := "data_Giant.txt"
-	sizeFile := 1073741832
-	expectNumLine := 72323529
+	const (
+		nameFile      = "data_Giant.txt"
+		sizeFile      = 1073741832
+		expectNumLine = 72323529
+	)
 
+	pathFile := filepath.Join("testdata", nameFile)
+
+	// since targetFuncions is a map, the order of the tests is random.
 	for nameFunc, targetFunc := range targetFuncions {
-		pathFile := filepath.Join("testdata", nameFile)
 		nameTest := fmt.Sprintf("size-%s_%s_%s", readableSize(sizeFile), "Gigantic", nameFunc)
 
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			b.Run(nameTest, func(b *testing.B) {
 				runBench(b, expectNumLine, pathFile, targetFunc.fn)
 			})

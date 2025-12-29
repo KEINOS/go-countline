@@ -10,33 +10,38 @@
 # options for analysis running
 run:
   tests: true
-  fast: true
   build-tags:
     - golangci
-  skip-dirs:
-    - .github
   allow-parallel-runners: true
-
+issues:
+  exclude-dirs:
+    - .github
 output:
-  format: colored-line-number
   sort-results: true
 
 linters:
   enable-all: true
   disable:
-  # Deprecated linters
-  - exhaustivestruct
-  - nosnakecase
-  - ifshort
-  - interfacer
-  - scopelint
-  - deadcode
-  - structcheck
-  - golint
-  - maligned
-  - varcheck
+  # Remove deprecated linters that are deactived from the default list
+  #- exhaustivestruct
+  #- nosnakecase
+  #- ifshort
+  #- interfacer
+  #- scopelint
+  #- deadcode
+  #- structcheck
+  #- golint
+  #- maligned
+  #- varcheck
+  #
+  # Disable deprecated/unmaintained/renamed linters
+  - exportloopref
+  - gomnd
+  - execinquery
   # Allow test packages without "_test" suffix due to testing private functions
   - testpackage
+  # Allow external modules in the project
+  - depguard
 
 linters-settings:
   funlen:

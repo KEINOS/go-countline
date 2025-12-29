@@ -2,6 +2,8 @@
 
 This directory contains alternate implementations of the CountLines function.
 
+- Current implementation: alt2.go
+
 New implementations must be placed in this directory first and Pull-Requested.
 After benchmarking on code-review, they may be swapped into the main function.
 

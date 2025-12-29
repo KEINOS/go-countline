@@ -30,7 +30,7 @@ func TestCountLines_nil_input(t *testing.T) {
 
 type DummyReader struct{}
 
-func (r *DummyReader) Read(p []byte) (int, error) {
+func (r *DummyReader) Read(_ []byte) (int, error) {
 	return 0, errors.New("forced error")
 }
 

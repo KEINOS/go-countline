@@ -3,6 +3,7 @@ Package spec provides the test specifications for the CountLines function.
 
 Alternate implementations of CountLines function must pass the test as well.
 */
+//nolint:gochecknoglobals // allow global variable.
 package spec
 
 import (
@@ -25,7 +26,7 @@ import (
 // the specifications are covered.
 // Alternate functions must pass the test with this data as well.
 //
-//nolint:gomnd,gochecknoglobals // numbers of ExpectOut are not magic numbers and let DataCountLines be global.
+//nolint:mnd // numbers of ExpectOut are not magic numbers and let DataCountLines be global.
 var DataCountLines = []struct {
 	Reason    string // Reason on failure
 	Input     string // Input data
@@ -109,11 +110,11 @@ func RunSpecTest(t *testing.T, nameFn string, fn func(io.Reader) (int, error)) {
 		testNum := fmt.Sprintf("test #%v", index)
 
 		t.Run(testNum, func(t *testing.T) {
-			logInput := fmt.Sprintf("%v", test.Input)
+			logInput := test.Input
 
 			// Crop the input to make it readable
 			if len(test.Input) > threshold {
-				logInput = fmt.Sprintf("%v", test.Input[:64]+"..."+test.Input[len(test.Input)-64:])
+				logInput = fmt.Sprintf("%v ... %v", test.Input[:64], test.Input[len(test.Input)-64:])
 			}
 
 			t.Logf("Input : %#v", logInput)
@@ -150,7 +151,7 @@ func GetStrDummyLines(sizeLine, numLine int64) string {
 	dataLine := genOneLine(sizeLine)
 
 	result := ""
-	for i := int64(0); i < numLine; i++ {
+	for range numLine {
 		result += string(dataLine)
 	}
 
@@ -170,7 +171,7 @@ func genOneLine(sizeLine int64) []byte {
 
 	dataLine := make([]byte, sizeLine)
 
-	for i := int64(0); i < sizeLine; i++ {
+	for i := range sizeLine {
 		dataLine[i] = 'a'
 
 		if i == sizeLine-1 {

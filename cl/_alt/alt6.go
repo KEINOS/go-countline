@@ -12,22 +12,23 @@ import (
 )
 
 // ----------------------------------------------------------------------------
-//  CountLinesAlt2
+//  CountLinesAlt6
 // ----------------------------------------------------------------------------
 
-// CountLinesAlt2 uses bufio.Reader and goroutines to count the number of lines.
+// CountLinesAlt6 uses bufio.Reader and goroutines to count the number of lines.
 //
 //nolint:funlen,cyclop // only exceeds 4 lines(74/70), complexity of 1 cycle(11/19)
-func CountLinesAlt2(inputReader io.Reader) (int, error) {
+func CountLinesAlt6(inputReader io.Reader) (int, error) {
 	// maxInt is the maximum possitive value of int on current system in uint.
 	const maxInt = ^uint(0) >> 1
+	// bufSize is the maximum size of the buffer.
+	const bufSize = bufio.MaxScanTokenSize
 
 	if inputReader == nil {
 		return 0, errors.New("given reader is nil")
 	}
 
 	wg := new(sync.WaitGroup) //nolint:varnamelen
-	bufSize := bufio.MaxScanTokenSize
 	count := uint64(0)
 	bufReader := bufio.NewReader(inputReader)
 	lastBuf := make([]byte, bufSize)
@@ -37,7 +38,7 @@ func CountLinesAlt2(inputReader io.Reader) (int, error) {
 		numIte++
 		buf := make([]byte, bufSize*numIte)
 
-		numRead, err := bufReader.Read(buf) // loading chunk into buffer
+		numRead, err := bufReader.Read(buf) // loading chunk into the buffer
 		if err != nil {
 			if err == io.EOF {
 				break

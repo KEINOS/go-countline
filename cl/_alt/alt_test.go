@@ -40,6 +40,7 @@ func TestCountLines_specs(t *testing.T) {
 		{"CountLinesAlt3", CountLinesAlt3},
 		{"CountLinesAlt4", CountLinesAlt4},
 		{"CountLinesAlt5", CountLinesAlt5},
+		{"CountLinesAlt6", CountLinesAlt6},
 	} {
 		t.Run(targetFunc.name, func(t *testing.T) {
 			spec.RunSpecTest(t, targetFunc.name, targetFunc.fn)
