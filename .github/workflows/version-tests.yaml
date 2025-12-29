@@ -1,17 +1,14 @@
 # =============================================================================
-#  Unit Tests on Go v1.16 to latest
+#  Unit Tests on Various Go Versions
 # =============================================================================
 # This Workflow runs unit tests on various Go versions over Docker on any push.
 # This action caches the built Docker image for a month unless any changes in
 # the Dockerfile or go.mod were made.
-name: Go 1.16~latest
+name: Various Go Version Tests
 
 on:
   workflow_dispatch:
   push:
-
-env:
-  PATH_CACHE: /tmp/docker-img-arch
 
 jobs:
   go:
@@ -19,35 +16,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
-
-      - name: Create cache ID from file hash
-        uses: KEINOS/gh-action-hash-for-cache@main
-        id: cacheid
-        # Udate the hash if any file in the path is changed or the month has changed.
-        with:
-          path: |
-            ./go.mod
-            ./.github/Dockerfile
-            ./.github/docker-compose.yml
-            ./.github/workflows/version-tests.yaml
-          variant: $(TZ=UTC-9 date '+%Y%m')
-
-      - name: Cache or restore image archive
-        id: cache
-        uses: actions/cache@v4
-        with:
-          path: ${{ env.PATH_CACHE }}
-          key: ${{ steps.cacheid.outputs.hash }}
-
-      - name: Load Docker images if exist
-        if: steps.cache.outputs.cache-hit == 'true'
-        run: |
-          docker load --input ${{ env.PATH_CACHE }}/github_min.tar
-          docker load --input ${{ env.PATH_CACHE }}/github_latest_1.tar
+        uses: actions/checkout@v6
 
       - name: Build Docker images if no-exists
-        if: steps.cache.outputs.cache-hit != 'true'
         run: |
           : # Pull images one-by-one for stability
           docker pull golang:1.22-alpine
@@ -55,16 +26,8 @@ jobs:
           : # Build container images
           docker compose --file ./.github/docker-compose.yml build
 
-      - name: Save built images if no-exists
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: |
-          : # Ensure the directory exists
-          mkdir -p ${{ env.PATH_CACHE }}
-          : # Save images to cache directory
-          docker save --output ${{ env.PATH_CACHE }}/github_min.tar github_min:latest
-          docker save --output ${{ env.PATH_CACHE }}/github_latest_1.tar github_latest:latest
-
       - name: Run tests on minimum supported Go version
         run: docker compose --file ./.github/docker-compose.yml run min
+
       - name: Run tests on latest Go
         run: docker compose --file ./.github/docker-compose.yml run latest
