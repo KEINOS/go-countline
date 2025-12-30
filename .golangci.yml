@@ -1,50 +1,28 @@
-# This file contains configuration options for GolangCI-Lint.
-#
-# - Version: golangci-lint @latest (currntly: v1.50.1)
-# - Note:
-#     Usually, it is not recommended to use the latest version of `golangci-lint`.
-#     However, in our case, we use the latest version to ensure that the linter
-#     configuration is always up-to-date by running the test periodically in CI.
-# - Available linters see: https://golangci-lint.run/usage/linters/
+version: "2"
 
-# options for analysis running
 run:
   tests: true
   build-tags:
     - golangci
   allow-parallel-runners: true
-issues:
-  exclude-dirs:
-    - .github
-output:
-  sort-results: true
 
 linters:
-  enable-all: true
-  disable:
-  # Remove deprecated linters that are deactived from the default list
-  #- exhaustivestruct
-  #- nosnakecase
-  #- ifshort
-  #- interfacer
-  #- scopelint
-  #- deadcode
-  #- structcheck
-  #- golint
-  #- maligned
-  #- varcheck
-  #
-  # Disable deprecated/unmaintained/renamed linters
-  - exportloopref
-  - gomnd
-  - execinquery
-  # Allow test packages without "_test" suffix due to testing private functions
-  - testpackage
-  # Allow external modules in the project
-  - depguard
+  # Which dirs to skip. Issues from them won't be reported.
+  exclusions:
+    paths:
+      - .github
+  # Enable all linters. Conf settings may follow.
+  default: all
 
-linters-settings:
-  funlen:
-    # Checks the number of lines in a function.
-    # Default: 60
-    lines: 70
+  disable:
+  # Disabled because of testing private functions
+  - testpackage
+  # We allow global variable for testing purposes
+  - gochecknoglobals
+  # Disabled due to the use of external packages
+  - depguard
+  # ========================================
+  # Disable deprecated/abandoned linters
+  # ========================================
+  # Disabled due to wsl_v5
+  - wsl

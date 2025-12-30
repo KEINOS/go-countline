@@ -12,16 +12,11 @@ import (
 
 //nolint:paralleltest // do not parallelize due to temporary changing the global variable
 func Test_main(t *testing.T) {
-	// Prepare to change directory
-	pathReturn, err := os.Getwd()
-	require.NoError(t, err, "failed to get current working directory")
-
-	defer require.NoError(t, os.Chdir(pathReturn))
-
 	// Mock the path to the Docker environment file. Due to cover the case when
 	// the tests are running in Docker.
 	if IsDocker() {
 		oldPathDockerEnv := pathDockerEnv
+
 		defer func() {
 			pathDockerEnv = oldPathDockerEnv
 		}()
@@ -33,10 +28,11 @@ func Test_main(t *testing.T) {
 	pathDirTemp := t.TempDir()
 
 	pathDirTempData := filepath.Join(pathDirTemp, "testdata")
+	//nolint:gosec // high perm is not an issue in test code
 	require.NoError(t, os.MkdirAll(pathDirTempData, 0o755), "failed to create temp directory")
 
 	// Chenge directory to the temp dir
-	require.NoError(t, os.Chdir(pathDirTemp))
+	t.Chdir(pathDirTemp)
 
 	// Mock testdata and os.Exit function
 	oldDataSizes := DataSizes
@@ -47,7 +43,7 @@ func Test_main(t *testing.T) {
 		OsExit = oldOsExit
 	}()
 
-	OsExit = func(code int) {
+	OsExit = func(_ int) {
 		panic("panic insted of os.Exit")
 	}
 
@@ -77,6 +73,7 @@ func Test_main(t *testing.T) {
 func Test_exitOnError(t *testing.T) {
 	// Backup and defer restore
 	oldOsExit := OsExit
+
 	defer func() {
 		OsExit = oldOsExit
 	}()
@@ -100,12 +97,14 @@ func Test_exitOnError(t *testing.T) {
 func Test_genFiles_fail_generate_file(t *testing.T) {
 	// Mock the bufio.Writer to fail
 	forceFailWraite = true
+
 	defer func() {
 		forceFailWraite = false
 	}()
 
 	// Mock testdata and os.Exit function
 	oldDataSizes := DataSizes
+
 	defer func() {
 		DataSizes = oldDataSizes
 	}()
@@ -127,7 +126,7 @@ func Test_genFiles_fail_generate_file(t *testing.T) {
 func Test_genFile(t *testing.T) {
 	t.Parallel()
 
-	pathFileTemp := filepath.Join(t.TempDir(), "test_"+t.Name()+".txt")
+	pathFileTemp := filepath.Clean(filepath.Join(t.TempDir(), "test_"+t.Name()+".txt"))
 
 	// Generate a file with 16 bytes in size
 	err := genFile(16, pathFileTemp)
@@ -155,6 +154,7 @@ func Test_genFile_file_is_dir(t *testing.T) {
 //nolint:paralleltest // do not parallelize due to temporary changing the global variable
 func TestIsDocker(t *testing.T) {
 	oldPathDockerEnv := pathDockerEnv
+
 	defer func() {
 		pathDockerEnv = oldPathDockerEnv
 	}()

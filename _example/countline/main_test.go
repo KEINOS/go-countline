@@ -75,6 +75,7 @@ func Test_main_missing_args(t *testing.T) {
 //nolint:paralleltest // do not parallelize due to temporary changing global variables
 func TestExitOnError(t *testing.T) {
 	oldOsExit := osExit
+
 	defer func() {
 		osExit = oldOsExit
 	}()

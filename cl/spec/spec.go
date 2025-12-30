@@ -150,12 +150,20 @@ func RunSpecTest(t *testing.T, nameFn string, fn func(io.Reader) (int, error)) {
 func GetStrDummyLines(sizeLine, numLine int64) string {
 	dataLine := genOneLine(sizeLine)
 
-	result := ""
+	// result := ""
+	// for range numLine {
+	// 	result += string(dataLine)
+	// }
+	//
+	// return result
+
+	var strBldr strings.Builder
+
 	for range numLine {
-		result += string(dataLine)
+		strBldr.Write(dataLine)
 	}
 
-	return result
+	return strBldr.String()
 }
 
 // ----------------------------------------------------------------------------

@@ -56,22 +56,25 @@ coverage: unit_test
 # Note: `benchstat` is required to run this.
 #   $ go install golang.org/x/perf/cmd/benchstat@latest
 bench: gen_data
+    # go install "golang.org/x/perf/cmd/benchstat@latest"
+	type benchstat >/dev/null 2>&1 || (echo "benchstat is not installed. Please install it first."; exit 1)
+
 	set -eu -o pipefail
 
 	printf "Benchmarking with light weight datas ... "
-	go test -benchmem -count 5 -benchtime 10s -bench Benchmark_light ./... > bench.txt
+	go test -benchmem -count 6 -benchtime 10s -bench Benchmark_light ./... > bench.txt
 	echo "OK"
 
 	printf "Benchmarking with heavy sized datas ... "
-	go test -benchmem -bench Benchmark_heavy ./... >> bench.txt
+	go test -benchmem -count 6 -bench Benchmark_heavy ./... >> bench.txt
 	echo "OK"
 
 	printf "Benchmarking with a giant size data ... "
-	go test -benchmem -count 5 -bench Benchmark_giant ./... | tee -a bench.txt
+	go test -benchmem -count 6 -bench Benchmark_giant ./... | tee -a bench.txt
 	echo "OK"
 
 	echo "Benchmark results:"
-	benchstat -sort delta bench.txt
+	benchstat -filter ".name:/giant/" bench.txt > bench_giant.txt
 
 # -----------------------------------------------------------------------------
 #  Docker installed only tests for various Go versions

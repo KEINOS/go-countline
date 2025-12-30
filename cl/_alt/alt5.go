@@ -1,5 +1,4 @@
-//nolint:revive,stylecheck
-package _alt
+package alt
 
 import (
 	"bufio"
@@ -31,7 +30,8 @@ func countLinesAlt5(inputReader io.Reader, bufSize int) (int, error) {
 		countLine++
 	}
 
-	if err := bufScanner.Err(); err != nil {
+	err := bufScanner.Err()
+	if err != nil {
 		if errors.Is(err, bufio.ErrTooLong) {
 			return countLinesAlt5(inputReader, bufSize*bufSizeDefault)
 		}

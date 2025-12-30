@@ -1,5 +1,4 @@
-//nolint:revive,stylecheck
-package _alt
+package alt
 
 import (
 	"io"
@@ -34,6 +33,7 @@ func CountLinesAlt1(inputReader io.Reader) (int, error) {
 	return count, nil
 }
 
+// LineCounterAlt1 is a Transformer implementation to count lines.
 type LineCounterAlt1 struct {
 	LenRead      int
 	Count        int
@@ -43,7 +43,7 @@ type LineCounterAlt1 struct {
 // Transform is the implementation of the Transformer interface.
 //
 //nolint:nonamedreturns // named returns are used for clarity to match the interface
-func (lc *LineCounterAlt1) Transform(dst, src []byte, atEOF bool) (nDst, nSrc int, err error) {
+func (lc *LineCounterAlt1) Transform(_, src []byte, _ bool) (nDst, nSrc int, err error) {
 	readBytes := 0
 
 	for _, value := range src {
@@ -64,6 +64,7 @@ func (lc *LineCounterAlt1) Transform(dst, src []byte, atEOF bool) (nDst, nSrc in
 	return readBytes, readBytes, nil
 }
 
+// Reset resets the internal state of LineCounterAlt1.
 func (lc *LineCounterAlt1) Reset() {
 	lc.LenRead = 0
 	lc.Count = 0

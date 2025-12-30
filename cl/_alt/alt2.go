@@ -1,5 +1,4 @@
-//nolint:revive,stylecheck
-package _alt
+package alt
 
 import (
 	"bufio"
@@ -94,6 +93,5 @@ func CountLinesAlt2(inputReader io.Reader) (int, error) {
 		return 0, errors.New("number of lines exceeds the maximum value of int")
 	}
 
-	//nolint:gosec // oveflow is checked above
 	return int(count), nil
 }

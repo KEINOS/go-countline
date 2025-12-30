@@ -14,6 +14,8 @@ import (
 //
 //nolint:funlen,cyclop // only exceeds 4 lines(74/70), complexity of 1 cycle(11/19)
 func CountLines(inputReader io.Reader) (int, error) {
+	// Current implementation is alt6.go
+
 	// maxInt is the maximum possitive value of int on current system in uint.
 	const maxInt = ^uint(0) >> 1
 
@@ -89,6 +91,5 @@ func CountLines(inputReader io.Reader) (int, error) {
 		return 0, errors.New("number of lines exceeds the maximum value of int")
 	}
 
-	//nolint:gosec // oveflow is checked above
 	return int(count), nil
 }

@@ -12,19 +12,23 @@ import (
 	"github.com/pkg/errors"
 )
 
+const KiB = 1024
+const MiB = 1024 * KiB
+const GiB = 1024 * MiB
+
 // DataSizes defines the data sizes to generate.
 //
-//nolint:gomnd
+//nolint:mnd
 var DataSizes = []struct {
 	Name string
 	Size int
 }{
-	{Name: "Tiny", Size: 1024},                // 1KiB
-	{Name: "Small", Size: 1024 * 1024},        // 1MiB
-	{Name: "Medium", Size: 1024 * 1024 * 10},  // 10MiB
-	{Name: "Large", Size: 1024 * 1024 * 50},   // 50MiB
-	{Name: "Huge", Size: 1024 * 1024 * 100},   // 100MiB
-	{Name: "Giant", Size: 1024 * 1024 * 1024}, // 1GiB
+	{Name: "Tiny", Size: 1 * KiB},    // 1KiB
+	{Name: "Small", Size: 1 * MiB},   // 1MiB
+	{Name: "Medium", Size: 10 * MiB}, // 10MiB
+	{Name: "Large", Size: 50 * MiB},  // 50MiB
+	{Name: "Huge", Size: 100 * MiB},  // 100MiB
+	{Name: "Giant", Size: 1 * GiB},   // 1GiB
 }
 
 func main() {
@@ -50,13 +54,15 @@ func genFiles(pathDirBase string) error {
 		pathFile := filepath.Join(pathDirBase, nameFile)
 
 		// Skip if file already exists
-		if infoFile, err := os.Stat(pathFile); err == nil && infoFile.Size() >= int64(dataSize) {
+		infoFile, err := os.Stat(pathFile)
+		if err == nil && infoFile.Size() >= int64(dataSize) {
 			fmt.Printf("  - %s ... OK (exits)\n", pathFile)
 
 			continue
 		}
 
-		if err := genFile(dataSize, pathFile); err != nil {
+		err = genFile(dataSize, pathFile)
+		if err != nil {
 			return errors.Wrap(err, "failed to generate file")
 		}
 	}
@@ -68,7 +74,10 @@ func genFiles(pathDirBase string) error {
 // a dependency injection.
 var forceFailWraite = false
 
-func genFile(sizeFile int, pathFile string) error {
+//nolint:cyclop,funlen // acceptable complexity and length for this function
+func genFile(sizeFile int, pathFile string) (retErr error) {
+	pathFile = filepath.Clean(pathFile)
+
 	fmt.Printf("  - %s ...\r", pathFile)
 
 	fileP, err := os.Create(pathFile)
@@ -76,10 +85,29 @@ func genFile(sizeFile int, pathFile string) error {
 		return errors.Wrap(err, "failed to open/create file")
 	}
 
-	defer fileP.Close()
+	defer func() {
+		err := fileP.Close()
+		if err != nil {
+			if retErr == nil {
+				retErr = errors.Wrap(err, "failed to close file")
+			} else {
+				retErr = errors.Wrap(retErr, "failed to close file")
+			}
+		}
+	}()
 
 	bufP := bufio.NewWriter(fileP)
-	defer bufP.Flush()
+
+	defer func() {
+		err := bufP.Flush()
+		if err != nil {
+			if retErr == nil {
+				retErr = errors.Wrap(err, "failed to flush buffer")
+			} else {
+				retErr = errors.Wrap(retErr, "failed to flush buffer")
+			}
+		}
+	}()
 
 	totalSize := int64(0)
 	countLine := 0
@@ -87,7 +115,7 @@ func genFile(sizeFile int, pathFile string) error {
 	for {
 		countLine++
 
-		written, err := bufP.WriteString(fmt.Sprintf("line: %d\n", countLine))
+		written, err := fmt.Fprintf(bufP, "line: %d\n", countLine)
 		if err != nil || forceFailWraite {
 			if forceFailWraite {
 				err = errors.New("forced error")
@@ -109,7 +137,7 @@ func genFile(sizeFile int, pathFile string) error {
 		}
 	}
 
-	return nil
+	return retErr
 }
 
 var pathDockerEnv = filepath.Join("/", ".dockerenv")

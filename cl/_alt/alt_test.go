@@ -9,9 +9,7 @@
 //
 //	Note that all implementations MUST pass the test for specifications.
 //	See the "Spec Tests" section below.
-//
-//nolint:revive,stylecheck
-package _alt
+package alt
 
 import (
 	"bytes"
@@ -80,6 +78,6 @@ type DummyReader struct {
 }
 
 // Read implements io.Reader interface. This method always returns an error with the msg field.
-func (r *DummyReader) Read(p []byte) (int, error) {
+func (r *DummyReader) Read(_ []byte) (int, error) {
 	return 0, errors.New(r.msg)
 }

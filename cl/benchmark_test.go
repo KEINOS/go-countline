@@ -6,11 +6,12 @@ import (
 	"testing"
 
 	"github.com/KEINOS/go-countline/cl"
+	"github.com/stretchr/testify/require"
 )
 
 func BenchmarkCountLines(b *testing.B) {
 	// 1 GiB size file
-	pathFile := filepath.Join("testdata", "data_Giant.txt")
+	pathFile := filepath.Clean(filepath.Join("testdata", "data_Giant.txt"))
 
 	expectNumLines := 72323529
 
@@ -21,7 +22,7 @@ func BenchmarkCountLines(b *testing.B) {
 	}
 
 	b.Cleanup(func() {
-		fileReader.Close()
+		require.NoError(b, fileReader.Close())
 	})
 
 	b.ResetTimer() // Begin benchmark

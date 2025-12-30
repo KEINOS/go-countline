@@ -55,18 +55,25 @@ func ExampleCountLines() {
 
 ## Benchmark Status
 
-Benchmark of counting 1 GiB of file size (72,323,529 lines) on MacBook Pro (Retina, 13-inch, Early 2015, 2.7 GHz Intel Core i5, 4 core).
+Benchmark of counting:
+
+- 1 GiB of file size (72,323,529 lines)
+- On Mac mini (Apple M4, 16 GB RAM, Tahoe 26.2)
 
 ```shellsession
 $ go test -benchmem -count 10 -run=^$ -bench BenchmarkCountLines ./... > bench.txt && benchstat bench.txt
-name          time/op
-CountLines-4  0.39ns ±19%
+cpu: Apple M4
+              │  bench.txt    │
+              │    sec/op     │
+CountLines-10   0.09183n ± 4%
 
-name          alloc/op
-CountLines-4   1.00B ± 0%
+              │  bench.txt │
+              │    B/op    │
+CountLines-10   1.000 ± 0%
 
-name          allocs/op
-CountLines-4    0.00
+              │  bench.txt │
+              │ allocs/op  │
+CountLines-10   0.000 ± 0%
 ```
 
 ```go
@@ -110,27 +117,26 @@ func BenchmarkCountLines(b *testing.B) {
 ```shellsession
 $ cat bench.txt
 goos: darwin
-goarch: amd64
+goarch: arm64
 pkg: github.com/KEINOS/go-countline/cl
-cpu: Intel(R) Core(TM) i5-5257U CPU @ 2.70GHz
-BenchmarkCountLines-4           1000000000               0.4294 ns/op          1 B/op          0 allocs/op
-BenchmarkCountLines-4           1000000000               0.4659 ns/op          1 B/op          0 allocs/op
-BenchmarkCountLines-4           1000000000               0.3811 ns/op          1 B/op          0 allocs/op
-BenchmarkCountLines-4           1000000000               0.3696 ns/op          1 B/op          0 allocs/op
-BenchmarkCountLines-4           1000000000               0.3672 ns/op          1 B/op          0 allocs/op
-BenchmarkCountLines-4           1000000000               0.3888 ns/op          1 B/op          0 allocs/op
-BenchmarkCountLines-4           1000000000               0.4071 ns/op          1 B/op          0 allocs/op
-BenchmarkCountLines-4           1000000000               0.3875 ns/op          1 B/op          0 allocs/op
-BenchmarkCountLines-4           1000000000               0.3604 ns/op          1 B/op          0 allocs/op
-BenchmarkCountLines-4           1000000000               0.3613 ns/op          1 B/op          0 allocs/op
+cpu: Apple M4
+BenchmarkCountLines-10      1000000000           0.09415 ns/op         1 B/op         0 allocs/op
+BenchmarkCountLines-10      1000000000           0.09049 ns/op         1 B/op         0 allocs/op
+BenchmarkCountLines-10      1000000000           0.09107 ns/op         1 B/op         0 allocs/op
+BenchmarkCountLines-10      1000000000           0.09030 ns/op         1 B/op         0 allocs/op
+BenchmarkCountLines-10      1000000000           0.09347 ns/op         1 B/op         0 allocs/op
+BenchmarkCountLines-10      1000000000           0.08913 ns/op         1 B/op         0 allocs/op
+BenchmarkCountLines-10      1000000000           0.09019 ns/op         1 B/op         0 allocs/op
+BenchmarkCountLines-10      1000000000           0.08834 ns/op         1 B/op         0 allocs/op
+BenchmarkCountLines-10      1000000000           0.09008 ns/op         1 B/op         0 allocs/op
+BenchmarkCountLines-10      1000000000           0.08829 ns/op         1 B/op         0 allocs/op
 PASS
-ok      github.com/KEINOS/go-countline/cl       85.368s
+ok    github.com/KEINOS/go-countline/cl  9.566s
 PASS
-ok      github.com/KEINOS/go-countline/cl/spec  0.275s
+ok    github.com/KEINOS/go-countline/cl/spec  0.629s
 ```
 
 </details>
-
 
 - [See other alternative implementations](./cl/_alt)
 

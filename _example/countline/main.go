@@ -4,6 +4,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/KEINOS/go-countline/cl"
 	"github.com/pkg/errors"
@@ -26,7 +27,7 @@ func main() {
 
 	pathFile := os.Args[1]
 
-	osFile, err := os.Open(pathFile)
+	osFile, err := os.Open(filepath.Clean(pathFile))
 	ExitOnError(err)
 
 	count, err := cl.CountLines(osFile)

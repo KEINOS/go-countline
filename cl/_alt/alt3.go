@@ -1,5 +1,4 @@
-//nolint:revive,stylecheck
-package _alt
+package alt
 
 import (
 	"bufio"

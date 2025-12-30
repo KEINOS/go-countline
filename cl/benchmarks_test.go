@@ -18,7 +18,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/KEINOS/go-countline/cl/_alt"
+	alt "github.com/KEINOS/go-countline/cl/_alt"
+	"github.com/stretchr/testify/require"
 )
 
 // targetFuncions is a map of functions to be tested.
@@ -31,12 +32,12 @@ var targetFuncions = map[string]struct {
 	// Current implementation
 	"CountLinesCurr": {CountLines},
 	// Alternate implementation. See alt_test.go.
-	"CountLinesAlt1": {_alt.CountLinesAlt1},
-	"CountLinesAlt2": {_alt.CountLinesAlt2},
-	"CountLinesAlt3": {_alt.CountLinesAlt3},
-	"CountLinesAlt4": {_alt.CountLinesAlt4},
-	"CountLinesAlt5": {_alt.CountLinesAlt5},
-	"CountLinesAlt6": {_alt.CountLinesAlt6},
+	"CountLinesAlt1": {alt.CountLinesAlt1},
+	"CountLinesAlt2": {alt.CountLinesAlt2},
+	"CountLinesAlt3": {alt.CountLinesAlt3},
+	"CountLinesAlt4": {alt.CountLinesAlt4},
+	"CountLinesAlt5": {alt.CountLinesAlt5},
+	"CountLinesAlt6": {alt.CountLinesAlt6},
 }
 
 // targetDatas is a list of files under `cl/testdata/` directory to be tested.
@@ -81,7 +82,7 @@ func Benchmark_giant(b *testing.B) {
 	for nameFunc, targetFunc := range targetFuncions {
 		nameTest := fmt.Sprintf("size-%s_%s_%s", readableSize(sizeFile), "Gigantic", nameFunc)
 
-		for range b.N {
+		for b.Loop() {
 			b.Run(nameTest, func(b *testing.B) {
 				runBench(b, expectNumLine, pathFile, targetFunc.fn)
 			})
@@ -102,7 +103,7 @@ func Benchmark_light(b *testing.B) {
 			pathFile := filepath.Join("testdata", data.nameFile)
 			nameTest := fmt.Sprintf("size-%s_%s_%s", readableSize(data.sizeFile), nameData, nameFunc)
 
-			for i := 0; i < b.N; i++ {
+			for b.Loop() {
 				b.Run(nameTest, func(b *testing.B) {
 					expectNumLine := data.numLine
 					runBench(b, expectNumLine, pathFile, targetFunc.fn)
@@ -125,7 +126,7 @@ func Benchmark_heavy(b *testing.B) {
 			pathFile := filepath.Join("testdata", data.nameFile)
 			nameTest := fmt.Sprintf("size-%s_%s_%s", readableSize(data.sizeFile), nameData, nameFunc)
 
-			for i := 0; i < b.N; i++ {
+			for b.Loop() {
 				b.Run(nameTest, func(b *testing.B) {
 					expectNumLine := data.numLine
 					runBench(b, expectNumLine, pathFile, targetFunc.fn)
@@ -143,11 +144,14 @@ func Benchmark_heavy(b *testing.B) {
 func runBench(b *testing.B, expectNumLines int, pathFile string, fn func(io.Reader) (int, error)) {
 	b.Helper()
 
-	fileReader, err := os.Open(pathFile)
+	fileReader, err := os.Open(filepath.Clean(pathFile))
 	if err != nil {
 		b.Fatal(err)
 	}
-	defer fileReader.Close()
+
+	defer func() {
+		require.NoError(b, fileReader.Close())
+	}()
 
 	b.ResetTimer() // Begin benchmark
 
