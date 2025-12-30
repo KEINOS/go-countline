@@ -21,7 +21,7 @@ jobs:
       - name: Build Docker images if no-exists
         run: |
           : # Pull images one-by-one for stability
-          docker pull golang:1.22-alpine
+          docker pull golang:1.24-alpine
           docker pull golang:alpine
           : # Build container images
           docker compose --file ./.github/docker-compose.yml build

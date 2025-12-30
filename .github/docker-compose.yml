@@ -26,7 +26,7 @@ services:
       context: ..
       dockerfile: ./.github/Dockerfile
       args:
-        VARIANT: 1.16-alpine
+        VARIANT: alpine
     volumes:
       - ..:/workspaces
       - TEST_DATA:/workspaces/cl/testdata
@@ -37,7 +37,7 @@ services:
       context: ..
       dockerfile: ./.github/Dockerfile
       args:
-        VARIANT: 1.20-alpine
+        VARIANT: 1.24-alpine
     volumes:
       - ..:/workspaces
       - GO_PKG_MOD:/go/pkg/mod

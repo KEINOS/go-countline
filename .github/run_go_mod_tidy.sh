@@ -14,19 +14,11 @@
 set -eu
 
 echo '* Backup modules ...'
-mv go.mod go.mod.bak
-mv go.sum go.sum.bak
+cp -f go.mod go.mod.bak
+cp -f go.sum go.sum.bak
 
-echo '* Create new blank go.mod ...'
-# Copy the first 4 lines of the go.mod.bak file to the new go.mod file.
-< go.mod.bak head -n 4 > go.mod
-
-echo '* Get latest modules ...'
-go get "github.com/pkg/errors"
-go get "github.com/stretchr/testify"
-go get "github.com/zenizh/go-capturer"
-go get "golang.org/x/text"
-
+echo '* Updating go.mod ...'
+go get -u ./...
 
 echo '* Run go tidy ...'
 go mod tidy

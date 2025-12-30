@@ -11,4 +11,4 @@
 - [update-codecov.yaml](update-codecov.yaml) (on release):
   - Posts the coverage results to codecov.io.
 - [version-tests.yaml](version-tests.yaml) (push):
-  - Runs `go test ./...` on vaious Go versions. Go 1.16 to the latest.
+  - Runs `go test ./...` on vaious Go versions. Minimum supported Go version to the latest.
