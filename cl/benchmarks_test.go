@@ -141,10 +141,11 @@ func Benchmark_heavy(b *testing.B) {
 //  Real-world file I/O performance benchmark
 // ----------------------------------------------------------------------------
 
-// Benchmark including file I/O (real-world scenario)
+// Benchmark including file I/O (real-world scenario).
 func BenchmarkCountLines_IO(b *testing.B) {
 	for sizeType, data := range targetDatas {
-		benchFile := filepath.Join("testdata", data.nameFile)
+		benchFile := filepath.Clean(filepath.Join("testdata", data.nameFile))
+
 		title := fmt.Sprintf("%s_%s", sizeType, readableSize(data.sizeFile))
 
 		b.Run(title, func(b *testing.B) {
@@ -156,26 +157,30 @@ func BenchmarkCountLines_IO(b *testing.B) {
 			b.SetBytes(fi.Size())
 
 			b.ResetTimer()
+
 			for b.Loop() {
-				f, err := os.Open(benchFile)
+				filePtr, err := os.Open(benchFile)
 				if err != nil {
 					b.Fatalf("open failed: %v", err)
 				}
 
-				_, err = CountLines(f)
+				_, err = CountLines(filePtr)
 				if err != nil {
 					b.Fatalf("count failed: %v", err)
 				}
 
-				f.Close()
+				err = filePtr.Close()
+				if err != nil {
+					b.Fatalf("close failed: %v", err)
+				}
 			}
 		})
 	}
 }
 
-// Benchmark algorithm only (memory-resident data)
+// Benchmark algorithm only (memory-resident data).
 func BenchmarkCountLines_Memory(b *testing.B) {
-	benchFile := filepath.Join("testdata", "data_Giant.txt")
+	benchFile := filepath.Clean(filepath.Join("testdata", "data_Giant.txt"))
 
 	data, err := os.ReadFile(benchFile)
 	if err != nil {
@@ -186,8 +191,10 @@ func BenchmarkCountLines_Memory(b *testing.B) {
 	b.SetBytes(size)
 
 	b.ResetTimer()
+
 	for b.Loop() {
 		r := bytes.NewReader(data)
+
 		_, err := CountLines(r)
 		if err != nil {
 			b.Fatalf("count failed: %v", err)
