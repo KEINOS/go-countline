@@ -2,3 +2,5 @@ coverage.*
 bench*.txt
 ./countline
 *.icloud
+./.claude/*
+
