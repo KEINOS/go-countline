@@ -35,4 +35,5 @@ jobs:
           go test -race ./...
 
       - name: Cleanups
+        shell: bash
         run: rm -rf ./cl/testdata/data_*.txt
