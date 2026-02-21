@@ -26,8 +26,11 @@ func main() {
 	}
 
 	pathFile := os.Args[1]
+	pathFile, err := filepath.Abs(filepath.Clean(pathFile))
+	ExitOnError(err)
 
-	osFile, err := os.Open(filepath.Clean(pathFile))
+	//nolint:gosec // due to the nature of CLI, allow opening any file
+	osFile, err := os.Open(pathFile)
 	ExitOnError(err)
 
 	count, err := cl.CountLines(osFile)
@@ -39,6 +42,8 @@ func main() {
 func ExitOnError(err error) {
 	if err != nil {
 		fmt.Fprintln(os.Stderr, msgHelp)
+
+		//nolint:gosec // stderr output in CLI context.
 		fmt.Fprintln(os.Stderr, "error:", err.Error())
 
 		osExit(1)

@@ -11,6 +11,7 @@
 package cl
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"os"
@@ -49,7 +50,7 @@ var targetFuncions = map[string]struct {
 var targetDatas = map[string]struct {
 	nameFile string
 	typeSize string
-	sizeFile int
+	sizeFile int // in bytes
 	numLine  int
 }{
 	"Tiny":   {nameFile: "data_Tiny.txt", typeSize: "medium", sizeFile: 1032, numLine: 114},
@@ -132,6 +133,71 @@ func Benchmark_heavy(b *testing.B) {
 					runBench(b, expectNumLine, pathFile, targetFunc.fn)
 				})
 			}
+		}
+	}
+}
+
+// ----------------------------------------------------------------------------
+//  Real-world file I/O performance benchmark
+// ----------------------------------------------------------------------------
+
+// Benchmark including file I/O (real-world scenario).
+func BenchmarkCountLines_IO(b *testing.B) {
+	for sizeType, data := range targetDatas {
+		benchFile := filepath.Clean(filepath.Join("testdata", data.nameFile))
+
+		title := fmt.Sprintf("%s_%s", sizeType, readableSize(data.sizeFile))
+
+		b.Run(title, func(b *testing.B) {
+			fi, err := os.Stat(benchFile)
+			if err != nil {
+				b.Fatalf("stat failed: %v", err)
+			}
+
+			b.SetBytes(fi.Size())
+
+			b.ResetTimer()
+
+			for b.Loop() {
+				filePtr, err := os.Open(benchFile)
+				if err != nil {
+					b.Fatalf("open failed: %v", err)
+				}
+
+				_, err = CountLines(filePtr)
+				if err != nil {
+					b.Fatalf("count failed: %v", err)
+				}
+
+				err = filePtr.Close()
+				if err != nil {
+					b.Fatalf("close failed: %v", err)
+				}
+			}
+		})
+	}
+}
+
+// Benchmark algorithm only (memory-resident data).
+func BenchmarkCountLines_Memory(b *testing.B) {
+	benchFile := filepath.Clean(filepath.Join("testdata", "data_Giant.txt"))
+
+	data, err := os.ReadFile(benchFile)
+	if err != nil {
+		b.Fatalf("read failed: %v", err)
+	}
+
+	size := int64(len(data))
+	b.SetBytes(size)
+
+	b.ResetTimer()
+
+	for b.Loop() {
+		r := bytes.NewReader(data)
+
+		_, err := CountLines(r)
+		if err != nil {
+			b.Fatalf("count failed: %v", err)
 		}
 	}
 }

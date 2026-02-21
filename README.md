@@ -55,88 +55,30 @@ func ExampleCountLines() {
 
 ## Benchmark Status
 
-Benchmark of counting:
+Performance test on Apple M4, 16 GB RAM:
 
-- 1 GiB of file size (72,323,529 lines)
-- On Mac mini (Apple M4, 16 GB RAM, Tahoe 26.2)
+### File I/O (real-world)
 
-```shellsession
-$ go test -benchmem -count 10 -run=^$ -bench BenchmarkCountLines ./... > bench.txt && benchstat bench.txt
-cpu: Apple M4
-              │  bench.txt    │
-              │    sec/op     │
-CountLines-10   0.09183n ± 4%
+Measures speed with file open and read operations:
 
-              │  bench.txt │
-              │    B/op    │
-CountLines-10   1.000 ± 0%
+| File Size | Speed | Time |
+| :-- | :-- | :-- |
+| 1 KiB | 42 MB/s | 24 μs |
+| 1 MiB | 6.5 GB/s | 160 μs |
+| 10 MiB | 9.5 GB/s | 1.1 ms |
+| 50 MiB | 10.3 GB/s | 5.1 ms |
+| 100 MiB | 10.7 GB/s | 9.8 ms |
+| **1 GiB** | **10.5 GB/s** | **102 ms** |
 
-              │  bench.txt │
-              │ allocs/op  │
-CountLines-10   0.000 ± 0%
-```
+### In-Memory (fast path)
 
-```go
-func BenchmarkCountLines(b *testing.B) {
-    // 1 GiB size file
-    pathFile := filepath.Join("testdata", "data_Giant.txt")
+Measures speed with data already in memory:
 
-    expectNumLines := 72323529
+| File Size | Speed |
+| :-- | :-- |
+| **1 GiB** | **~20 GB/s** |
 
-    // Open file
-    fileReader, err := os.Open(pathFile)
-    if err != nil {
-        b.Fatal(err)
-    }
-
-    b.Cleanup(func() {
-        fileReader.Close()
-    })
-
-    b.ResetTimer() // Begin benchmark
-
-    // Run function
-    actualNumLines, err := cl.CountLines(fileReader)
-    if err != nil {
-        b.Fatal(err)
-    }
-
-    b.StopTimer() // End benchmark
-
-    if expectNumLines != actualNumLines {
-        b.Fatalf(
-            "test %v failed: expect=%d, actual=%d",
-            b.Name(), expectNumLines, actualNumLines,
-        )
-    }
-}
-```
-
-<details><summary>bench.txt</summary>
-
-```shellsession
-$ cat bench.txt
-goos: darwin
-goarch: arm64
-pkg: github.com/KEINOS/go-countline/cl
-cpu: Apple M4
-BenchmarkCountLines-10      1000000000           0.09415 ns/op         1 B/op         0 allocs/op
-BenchmarkCountLines-10      1000000000           0.09049 ns/op         1 B/op         0 allocs/op
-BenchmarkCountLines-10      1000000000           0.09107 ns/op         1 B/op         0 allocs/op
-BenchmarkCountLines-10      1000000000           0.09030 ns/op         1 B/op         0 allocs/op
-BenchmarkCountLines-10      1000000000           0.09347 ns/op         1 B/op         0 allocs/op
-BenchmarkCountLines-10      1000000000           0.08913 ns/op         1 B/op         0 allocs/op
-BenchmarkCountLines-10      1000000000           0.09019 ns/op         1 B/op         0 allocs/op
-BenchmarkCountLines-10      1000000000           0.08834 ns/op         1 B/op         0 allocs/op
-BenchmarkCountLines-10      1000000000           0.09008 ns/op         1 B/op         0 allocs/op
-BenchmarkCountLines-10      1000000000           0.08829 ns/op         1 B/op         0 allocs/op
-PASS
-ok    github.com/KEINOS/go-countline/cl  9.566s
-PASS
-ok    github.com/KEINOS/go-countline/cl/spec  0.629s
-```
-
-</details>
+> **Note**: File I/O is limited by disk speed. In-memory is faster because no disk access. Use file I/O results for real-world expectations.
 
 - [See other alternative implementations](./cl/_alt)
 
