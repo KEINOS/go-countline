@@ -3,5 +3,5 @@ bench*.txt
 ./countline
 *.icloud
 .claude/
-
+dist/
 
