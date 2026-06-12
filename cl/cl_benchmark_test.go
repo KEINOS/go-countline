@@ -41,6 +41,12 @@ var targetFuncions = map[string]struct {
 	"CountLinesAlt6": {alt.CountLinesAlt6},
 }
 
+const (
+	MediumSize = "medium"
+	LargeSize  = "large"
+	GiantSize  = "giant"
+)
+
 // targetDatas is a list of files under `cl/testdata/` directory to be tested.
 // We are using a map to avoid the order of the tests.
 //
@@ -53,12 +59,12 @@ var targetDatas = map[string]struct {
 	sizeFile int // in bytes
 	numLine  int
 }{
-	"Tiny":   {nameFile: "data_Tiny.txt", typeSize: "medium", sizeFile: 1032, numLine: 114},
-	"Small":  {nameFile: "data_Small.txt", typeSize: "medium", sizeFile: 1048578, numLine: 88307},
-	"Medium": {nameFile: "data_Medium.txt", typeSize: "medium", sizeFile: 10485767, numLine: 815144},
-	"Large":  {nameFile: "data_Large.txt", typeSize: "large", sizeFile: 52428802, numLine: 3824279},
-	"Huge":   {nameFile: "data_Huge.txt", typeSize: "large", sizeFile: 104857612, numLine: 7569194},
-	"Giant":  {nameFile: "data_Giant.txt", typeSize: "giant", sizeFile: 1073741832, numLine: 72323529},
+	"Tiny":   {nameFile: "data_Tiny.txt", typeSize: MediumSize, sizeFile: 1032, numLine: 114},
+	"Small":  {nameFile: "data_Small.txt", typeSize: MediumSize, sizeFile: 1048578, numLine: 88307},
+	"Medium": {nameFile: "data_Medium.txt", typeSize: MediumSize, sizeFile: 10485767, numLine: 815144},
+	"Large":  {nameFile: "data_Large.txt", typeSize: LargeSize, sizeFile: 52428802, numLine: 3824279},
+	"Huge":   {nameFile: "data_Huge.txt", typeSize: LargeSize, sizeFile: 104857612, numLine: 7569194},
+	"Giant":  {nameFile: "data_Giant.txt", typeSize: GiantSize, sizeFile: 1073741832, numLine: 72323529},
 }
 
 // ============================================================================
@@ -104,12 +110,12 @@ func Benchmark_light(b *testing.B) {
 			pathFile := filepath.Join("testdata", data.nameFile)
 			nameTest := fmt.Sprintf("size-%s_%s_%s", readableSize(data.sizeFile), nameData, nameFunc)
 
-			for b.Loop() {
-				b.Run(nameTest, func(b *testing.B) {
+			b.Run(nameTest, func(b *testing.B) {
+				for b.Loop() {
 					expectNumLine := data.numLine
 					runBench(b, expectNumLine, pathFile, targetFunc.fn)
-				})
-			}
+				}
+			})
 		}
 	}
 }

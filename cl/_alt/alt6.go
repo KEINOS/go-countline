@@ -15,11 +15,15 @@ import (
 // ----------------------------------------------------------------------------
 
 // CountLinesAlt6 uses bufio.Reader and goroutines to count the number of lines.
-//
-//nolint:funlen,cyclop // only exceeds 4 lines(74/70), complexity of 1 cycle(11/19)
 func CountLinesAlt6(inputReader io.Reader) (int, error) {
 	// maxInt is the maximum possitive value of int on current system in uint.
 	const maxInt = ^uint(0) >> 1
+
+	return countLinesAlt6(inputReader, maxInt)
+}
+
+//nolint:funlen,cyclop // length and complexity are inherited from the original benchmark implementation.
+func countLinesAlt6(inputReader io.Reader, maxInt uint) (int, error) {
 	// bufSize is the maximum size of the buffer.
 	const bufSize = bufio.MaxScanTokenSize
 
@@ -49,9 +53,7 @@ func CountLinesAlt6(inputReader io.Reader) (int, error) {
 		task := buf[:numRead]
 		lastBuf = task
 
-		wg.Add(1)
-
-		go func() {
+		wg.Go(func() {
 			found := bytes.Count(task, []byte{'\n'})
 
 			// add only if "found" is less than maxInt
@@ -61,9 +63,7 @@ func CountLinesAlt6(inputReader io.Reader) (int, error) {
 				//nolint:gosec // oveflow is checked above
 				atomic.AddUint64(&count, uint64(found))
 			}
-
-			wg.Done()
-		}()
+		})
 	}
 
 	wg.Wait()

@@ -14,6 +14,7 @@ package alt
 import (
 	"bytes"
 	"io"
+	"strings"
 	"testing"
 
 	"github.com/KEINOS/go-countline/cl/spec"
@@ -68,6 +69,28 @@ func TestCountLines_specs(t *testing.T) {
 			_, err := targetFunc.fn(dummyReader)
 
 			require.NoError(t, err, "it should not return an error on zero padded/empty capped byte slice input")
+		})
+	}
+}
+
+func TestCountLines_overflow(t *testing.T) {
+	t.Parallel()
+
+	for _, targetFunc := range []struct {
+		name string
+		fn   func(io.Reader, uint) (int, error)
+	}{
+		{"CountLinesAlt2", countLinesAlt2},
+		{"CountLinesAlt6", countLinesAlt6},
+	} {
+		t.Run(targetFunc.name, func(t *testing.T) {
+			t.Parallel()
+
+			numLines, err := targetFunc.fn(strings.NewReader("line without newline"), 0)
+
+			require.Error(t, err, "should return an error on line count overflow")
+			require.Equal(t, 0, numLines, "returned number of lines should be 0 on error")
+			require.Contains(t, err.Error(), "maximum value of int")
 		})
 	}
 }

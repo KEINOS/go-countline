@@ -11,11 +11,8 @@ import (
 )
 
 // CountLines counts the number of lines that contains a line break (LF) in a file.
-//
-//nolint:funlen,cyclop // only exceeds 4 lines(74/70), complexity of 1 cycle(11/19)
 func CountLines(inputReader io.Reader) (int, error) {
 	// Current implementation is alt6.go
-
 	// maxInt is the maximum possitive value of int on current system in uint.
 	const maxInt = ^uint(0) >> 1
 
@@ -46,9 +43,7 @@ func CountLines(inputReader io.Reader) (int, error) {
 		task := buf[:numRead]
 		lastBuf = task
 
-		wg.Add(1)
-
-		go func() {
+		wg.Go(func() {
 			found := bytes.Count(task, []byte{'\n'})
 
 			// add only if "found" is less than maxInt
@@ -58,9 +53,7 @@ func CountLines(inputReader io.Reader) (int, error) {
 				//nolint:gosec // oveflow is checked above
 				atomic.AddUint64(&count, uint64(found))
 			}
-
-			wg.Done()
-		}()
+		})
 	}
 
 	wg.Wait()
@@ -84,11 +77,6 @@ func CountLines(inputReader io.Reader) (int, error) {
 
 	if hasFragment {
 		atomic.AddUint64(&count, 1) // count++ safely
-	}
-
-	// Check overflow on 32bit systems
-	if count > uint64(maxInt) {
-		return 0, errors.New("number of lines exceeds the maximum value of int")
 	}
 
 	return int(count), nil

@@ -6,6 +6,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 
@@ -74,13 +75,27 @@ func genFiles(pathDirBase string) error {
 // a dependency injection.
 var forceFailWraite = false
 
+type bufferedWriter interface {
+	io.Writer
+	Flush() error
+}
+
+var createFile = func(name string) (io.WriteCloser, error) {
+	//nolint:gosec // path is intentionally provided by the generator caller.
+	return os.Create(name)
+}
+
+var newBufferedWriter = func(writer io.Writer) bufferedWriter {
+	return bufio.NewWriter(writer)
+}
+
 //nolint:cyclop,funlen // acceptable complexity and length for this function
 func genFile(sizeFile int, pathFile string) (retErr error) {
 	pathFile = filepath.Clean(pathFile)
 
 	fmt.Printf("  - %s ...\r", pathFile)
 
-	fileP, err := os.Create(pathFile)
+	fileP, err := createFile(pathFile)
 	if err != nil {
 		return errors.Wrap(err, "failed to open/create file")
 	}
@@ -96,7 +111,7 @@ func genFile(sizeFile int, pathFile string) (retErr error) {
 		}
 	}()
 
-	bufP := bufio.NewWriter(fileP)
+	bufP := newBufferedWriter(fileP)
 
 	defer func() {
 		err := bufP.Flush()

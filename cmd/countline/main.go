@@ -43,7 +43,6 @@ func ExitOnError(err error) {
 	if err != nil {
 		fmt.Fprintln(os.Stderr, msgHelp)
 
-		//nolint:gosec // stderr output in CLI context.
 		fmt.Fprintln(os.Stderr, "error:", err.Error())
 
 		osExit(1)
