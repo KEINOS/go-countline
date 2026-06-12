@@ -1,16 +1,19 @@
 <!-- markdownlint-disable MD001 MD041 MD050 MD033 -->
-[![go1.16+](https://img.shields.io/badge/Go-1.16--latest-blue?logo=go)](https://github.com/KEINOS/go-countline/blob/main/.github/workflows/version-tests.yaml "Supported versions")
-[![Go Reference](https://pkg.go.dev/badge/github.com/KEINOS/go-countline.svg)](https://pkg.go.dev/github.com/KEINOS/go-countline#section-documentation "Read generated documentation of the app")
+[![Go 1.26+](https://img.shields.io/badge/Go-1.26%2B-blue?logo=go)](https://github.com/KEINOS/go-countline/blob/main/.github/workflows/version-tests.yaml)
+[![Go Reference](https://pkg.go.dev/badge/github.com/KEINOS/go-countline.svg)](https://pkg.go.dev/github.com/KEINOS/go-countline)
 
 # go-countline
 
-Go package "[go-countline](https://github.com/KEINOS/go-countline/cl)" does nothing more than **count the number of lines in a file**, but it tries to count as fast as possible.
+Go package
+"[go-countline](https://github.com/KEINOS/go-countline/cl)" does one thing:
+**count lines in an `io.Reader` quickly**.
 
-> __Note__: Unlike the "`wc -l`" command, this package counts the last line that does not end in line breaks/line feeds (see the example below).
+Unlike `wc -l`, `go-countline` counts a final line even when the input does not
+end with a line feed.
 
 ## Usage
 
-```go
+```shell
 go get "github.com/KEINOS/go-countline"
 ```
 
@@ -78,15 +81,30 @@ Measures speed with data already in memory:
 | :-- | :-- |
 | **1 GiB** | **~20 GB/s** |
 
-> **Note**: File I/O is limited by disk speed. In-memory is faster because no disk access. Use file I/O results for real-world expectations.
+> **Note**: File I/O is limited by disk speed. In-memory is faster because no
+> disk access. Use file I/O results for real-world expectations.
 
 - [See other alternative implementations](./cl/_alt)
+
+## CLI
+
+Install the command-line wrapper:
+
+```shell
+go install "github.com/KEINOS/go-countline/cmd/countline@latest"
+```
+
+Run it with one file path:
+
+```shell
+countline ./path/to/file.txt
+```
 
 ## Contributing
 
 ### Statuses
 
-[![Go 1.16~latest](https://github.com/KEINOS/go-countline/actions/workflows/version-tests.yaml/badge.svg)](https://github.com/KEINOS/go-countline/actions/workflows/version-tests.yaml)
+[![Go 1.26+](https://github.com/KEINOS/go-countline/actions/workflows/version-tests.yaml/badge.svg)](https://github.com/KEINOS/go-countline/actions/workflows/version-tests.yaml)
 [![Test on macOS/Win/Linux](https://github.com/KEINOS/go-countline/actions/workflows/platform-test.yaml/badge.svg)](https://github.com/KEINOS/go-countline/actions/workflows/platform-test.yaml)
 [![golangci-lint](https://github.com/KEINOS/go-countline/actions/workflows/golangci-lint.yaml/badge.svg)](https://github.com/KEINOS/go-countline/actions/workflows/golangci-lint.yaml)
 
@@ -96,9 +114,11 @@ Measures speed with data already in memory:
 
 ### Contribute
 
-**If you have found a faster way** to count the number of lines in a file, feel free to contribute!
+**Found a faster way** to count lines? Contributions are welcome.
 
-As long as the new function passes the test, it is merged. It then will be replaced to the main fucntion in the next release after the review by the contributors.
+Alternative implementations live in [`cl/_alt`](./cl/_alt). If an alternative
+passes the shared spec and benchmarks faster, it can replace the main
+implementation in a later release after review.
 
 - [Issues](https://github.com/KEINOS/go-countline/issues): [![Issues](https://img.shields.io/github/issues/KEINOS/go-countline)](https://github.com/KEINOS/go-countline/issues)
   - Please provide a reproducible code snippet.

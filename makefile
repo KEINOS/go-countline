@@ -121,15 +121,15 @@ build_docker: pull_image
 pull_image:
 	echo "[Building docker images]:"
 	printf "pulling ... "
-	docker pull --quiet golang:1.22-alpine
+	docker pull --quiet golang:1.26-alpine
 	printf "pulling ... "
 	docker pull --quiet golang:alpine
 
 .PHONY: go_min
 go_min: build_docker
-	echo "[Unit testing in Go v1.22(min)]:"
+	echo "[Unit testing in Go v1.26(min)]:"
 	docker compose --file ./.github/docker-compose.yml run min || exit 1
-	echo "ok ... Go v1.22"
+	echo "ok ... Go v1.26"
 
 .PHONY: go_latest
 go_latest: build_docker

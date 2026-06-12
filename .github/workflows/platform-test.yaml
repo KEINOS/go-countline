@@ -1,4 +1,4 @@
-# This workflow runs the unit test (`go test ./...`) on vaious platforms,
+# This workflow runs the unit test (`go test ./...`) on various platforms,
 # such as: Linux, macOS and Windows.
 name: Test on macOS/Win/Linux
 

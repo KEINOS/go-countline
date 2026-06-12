@@ -1,14 +1,20 @@
 # Test Data
 
-The below files are used for benchmarking and testing.
+The generated files in this directory are used for benchmarking and testing.
 
-> __Note__: __Becareful__ when opening it in an editor, as it may cause your editor to hang.
+> __Note__: Be careful when opening generated data in an editor. Some files are
+> large enough to make editors hang.
 >
 > To keep the repository size small, most of the test data is left uncommitted.
 > You must generate it yourself before testing and benchmarking.
-> To generate or re-generate these files, run `go generate ./...` from the root of the repository.
+> To generate or re-generate these files, run `go generate ./...` from the root
+> of the repository.
 
-1. `large_const.txt`
-    - This file is 1GiB of consisten data.
-1. `large_rand.txt`
-    - This file is 1GiB of random data.
+Generated files follow the `data_<Size>.txt` naming pattern:
+
+- `data_Tiny.txt`
+- `data_Small.txt`
+- `data_Medium.txt`
+- `data_Large.txt`
+- `data_Huge.txt`
+- `data_Giant.txt`

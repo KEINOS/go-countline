@@ -89,11 +89,11 @@ func Benchmark_giant(b *testing.B) {
 	for nameFunc, targetFunc := range targetFuncions {
 		nameTest := fmt.Sprintf("size-%s_%s_%s", readableSize(sizeFile), "Gigantic", nameFunc)
 
-		for b.Loop() {
-			b.Run(nameTest, func(b *testing.B) {
+		b.Run(nameTest, func(b *testing.B) {
+			for range b.N {
 				runBench(b, expectNumLine, pathFile, targetFunc.fn)
-			})
-		}
+			}
+		})
 	}
 }
 
@@ -111,7 +111,7 @@ func Benchmark_light(b *testing.B) {
 			nameTest := fmt.Sprintf("size-%s_%s_%s", readableSize(data.sizeFile), nameData, nameFunc)
 
 			b.Run(nameTest, func(b *testing.B) {
-				for b.Loop() {
+				for range b.N {
 					expectNumLine := data.numLine
 					runBench(b, expectNumLine, pathFile, targetFunc.fn)
 				}
@@ -133,12 +133,12 @@ func Benchmark_heavy(b *testing.B) {
 			pathFile := filepath.Join("testdata", data.nameFile)
 			nameTest := fmt.Sprintf("size-%s_%s_%s", readableSize(data.sizeFile), nameData, nameFunc)
 
-			for b.Loop() {
-				b.Run(nameTest, func(b *testing.B) {
+			b.Run(nameTest, func(b *testing.B) {
+				for range b.N {
 					expectNumLine := data.numLine
 					runBench(b, expectNumLine, pathFile, targetFunc.fn)
-				})
-			}
+				}
+			})
 		}
 	}
 }

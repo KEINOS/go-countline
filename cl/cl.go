@@ -4,34 +4,48 @@ import (
 	"bufio"
 	"bytes"
 	"io"
-	"sync"
-	"sync/atomic"
 
 	"github.com/pkg/errors"
 )
 
-// CountLines counts the number of lines that contains a line break (LF) in a file.
+const errLineCountOverflow = "number of lines exceeds the maximum value of int"
+
+// CountLines counts LF-delimited lines from inputReader.
+//
+// Unlike wc -l, it also counts a final line that does not end with '\n'.
 func CountLines(inputReader io.Reader) (int, error) {
-	// Current implementation is alt6.go
-	// maxInt is the maximum possitive value of int on current system in uint.
+	// maxInt is the maximum positive value of int on the current system.
 	const maxInt = ^uint(0) >> 1
 
+	return countLines(inputReader, maxInt)
+}
+
+func countLines(inputReader io.Reader, maxInt uint) (int, error) {
 	if inputReader == nil {
 		return 0, errors.New("given reader is nil")
 	}
 
-	wg := new(sync.WaitGroup) //nolint:varnamelen
-	bufSize := bufio.MaxScanTokenSize
-	count := uint64(0)
-	bufReader := bufio.NewReader(inputReader)
-	lastBuf := make([]byte, bufSize)
-	numIte := 0
+	buf := make([]byte, bufio.MaxScanTokenSize)
+	count := uint(0)
+	hasData := false
+	lastByte := byte('\n')
 
 	for {
-		numIte++
-		buf := make([]byte, bufSize*numIte)
+		numRead, err := inputReader.Read(buf)
+		if numRead > 0 {
+			chunk := buf[:numRead]
 
-		numRead, err := bufReader.Read(buf) // loading chunk into buffer
+			found := uint(bytes.Count(chunk, []byte{'\n'}))
+
+			err := addLineBreaks(&count, found, maxInt)
+			if err != nil {
+				return 0, err
+			}
+
+			hasData = true
+			lastByte = chunk[len(chunk)-1]
+		}
+
 		if err != nil {
 			if err == io.EOF {
 				break
@@ -39,45 +53,34 @@ func CountLines(inputReader io.Reader) (int, error) {
 
 			return 0, errors.Wrap(err, "failed to read from reader")
 		}
-
-		task := buf[:numRead]
-		lastBuf = task
-
-		wg.Go(func() {
-			found := bytes.Count(task, []byte{'\n'})
-
-			// add only if "found" is less than maxInt
-			if found < int(maxInt) {
-				// count++ safely
-				//
-				//nolint:gosec // oveflow is checked above
-				atomic.AddUint64(&count, uint64(found))
-			}
-		})
 	}
 
-	wg.Wait()
-
-	// Detect the file ends without a line break and count up if so.
-	lenLastBuf := len(lastBuf)
-	hasFragment := false
-
-	for i := lenLastBuf; i > 0; i-- {
-		tmpChar := lastBuf[i-1]
-		if tmpChar == '\x00' {
-			continue
+	if hasData && lastByte != '\n' {
+		err := addFinalLine(&count, maxInt)
+		if err != nil {
+			return 0, err
 		}
-
-		if tmpChar == '\n' {
-			break
-		}
-
-		hasFragment = true
-	}
-
-	if hasFragment {
-		atomic.AddUint64(&count, 1) // count++ safely
 	}
 
 	return int(count), nil
+}
+
+func addLineBreaks(count *uint, found, maxInt uint) error {
+	if found > maxInt || *count > maxInt-found {
+		return errors.New(errLineCountOverflow)
+	}
+
+	*count += found
+
+	return nil
+}
+
+func addFinalLine(count *uint, maxInt uint) error {
+	if *count == maxInt {
+		return errors.New(errLineCountOverflow)
+	}
+
+	*count++
+
+	return nil
 }
