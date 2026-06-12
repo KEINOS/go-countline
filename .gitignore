@@ -2,6 +2,7 @@
 # Due to ignoring test artifacts and generated files.
 *
 */
+.*
 
 # === Allow-List ===
 
