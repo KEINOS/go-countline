@@ -1,7 +1,35 @@
-coverage.*
-bench*.txt
-./countline
-*.icloud
-.claude/
-dist/
+# Ignore everything by default.
+# Due to ignoring test artifacts and generated files.
+*
+*/
 
+# === Allow-List ===
+
+# Dot/config files.
+!.gitignore
+!.editorconfig
+!.golangci.yml
+!.markdownlint-cli2.yaml
+!.yamlfmt
+
+# Dev/config dirs.
+!.github/
+!.github/**
+!.vscode/
+!.vscode/**
+!Makefile
+
+# Root docs.
+!README.md
+!CONTRIBUTING.md
+!LICENSE.md
+
+# Go module files.
+!go.mod
+!go.sum
+
+# Source/test trees.
+!countline/
+!countline/**
+!cmd/
+!cmd/**
