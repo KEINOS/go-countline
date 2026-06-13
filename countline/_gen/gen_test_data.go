@@ -58,7 +58,7 @@ func genFiles(pathDirBase string) error {
 		// Skip if file already exists
 		infoFile, err := os.Stat(pathFile)
 		if err == nil && infoFile.Size() >= int64(dataSize) {
-			fmt.Printf("  - %s ... OK (exits)\n", pathFile)
+			fmt.Printf("  - %s ... OK (exists)\n", pathFile)
 
 			continue
 		}
@@ -72,9 +72,9 @@ func genFiles(pathDirBase string) error {
 	return nil
 }
 
-// forceFailWraite forces the writer to fail if true. It is only used for testing as
+// forceFailWrite forces the writer to fail if true. It is only used for testing as
 // a dependency injection.
-var forceFailWraite = false
+var forceFailWrite = false
 
 type bufferedWriter interface {
 	io.Writer
@@ -132,8 +132,8 @@ func genFile(sizeFile int, pathFile string) (retErr error) {
 		countLine++
 
 		written, err := fmt.Fprintf(bufP, "line: %d\n", countLine)
-		if err != nil || forceFailWraite {
-			if forceFailWraite {
+		if err != nil || forceFailWrite {
+			if forceFailWrite {
 				err = errForcedWrite
 			}
 

@@ -103,10 +103,10 @@ func Test_exitOnError(t *testing.T) {
 //nolint:paralleltest // do not parallelize due to temporary changing global variables
 func Test_genFiles_fail_generate_file(t *testing.T) {
 	// Mock the bufio.Writer to fail
-	forceFailWraite = true
+	forceFailWrite = true
 
 	defer func() {
-		forceFailWraite = false
+		forceFailWrite = false
 	}()
 
 	// Mock testdata and os.Exit function

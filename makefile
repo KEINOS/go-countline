@@ -9,6 +9,8 @@
 #                    check.
 #      make bench ... Run benchmark. `benchstat` is required to run this. See
 #                     the comment in the "bench:" section.
+#      make kill ... Kill orphaned benchmark processes left behind by an
+#                    aborted `make bench` run.
 #      make test_docker ... Run unit tests with different versions of Go in a
 #                           Docker container.
 #  Note:
@@ -18,6 +20,9 @@
 # =============================================================================
 
 .SILENT:
+
+# Recipes use bash features such as `set -o pipefail`.
+SHELL := bash
 
 .PHONY: check
 check: test
@@ -73,37 +78,102 @@ lint:
 # coverage will fail if the total coverage is not 100%.
 .PHONY: coverage
 coverage: unit_test
-	set -euo pipefail
-	go tool cover -func=coverage.out | tail -n 1 | grep 100.0% || (echo "Total coverage is not 100.0%"; exit 1)
+	set -o pipefail; go tool cover -func=coverage.out | tail -n 1 | grep 100.0% || (echo "Total coverage is not 100.0%"; exit 1)
 
-# bench will benchmark with various size of data.
+# -----------------------------------------------------------------------------
+#  Benchmarks
+# -----------------------------------------------------------------------------
+# `make bench` compares all implementations over the light and heavy data
+# sets, then prints a benchstat summary. `benchstat` is required:
 #
-# Note: `benchstat` is required to run this.
 #   $ go install golang.org/x/perf/cmd/benchstat@latest
+#
+# Progress UX: each suite is repeated BENCH_COUNT times so benchstat can
+# aggregate the samples, and every output line is timestamped. A result
+# line appears every few seconds (light) or every ~10-30 s (heavy), so a
+# moving timestamp means the run is alive, not hung.
+#
+# Override the knobs for a quick smoke run:
+#
+#   $ make bench BENCH_COUNT=1 BENCH_TIME_LIGHT=0.1s BENCH_TIME_HEAVY=0.1s
+BENCH_COUNT ?= 6
+BENCH_TIME_LIGHT ?= 1s
+BENCH_TIME_HEAVY ?= 10s
+BENCH_OUT ?= bench.txt
+
+# timestamp prefixes every line piped into it with the current time.
+TIMESTAMP := while IFS= read -r line; do printf '[%s] %s\n' "$$(date +%H:%M:%S)" "$$line"; done
+
 .PHONY: bench
-bench: gen_data bench_lightweight bench_heavyweight
-	@echo "Benchmark results:"
-	@benchstat -filter ".name:/giant/" bench.txt > bench_giant.txt
+bench: check_install_benchstat gen_data bench_lightweight bench_heavyweight
+	echo ""
+	echo "Benchmark summary ($(BENCH_COUNT) samples per benchmark):"
+	benchstat $(BENCH_OUT)
 
 .PHONY: bench_lightweight
 bench_lightweight:
-	@echo "Benchmarking with light weight datas (Tiny/Small/Medium) ..."
-	@echo "(21 sub-benchmarks x 6 counts x 1s each = ~2 min. Each result line appears every ~1s)"
-	go test -benchmem -count 6 -benchtime 1s -bench Benchmark_light ./... | tee bench.txt
-	@echo "bench_lightweight: done"
+	echo "=== Lightweight benchmarks: Tiny/Small/Medium x 7 implementations ==="
+	echo "    $(BENCH_COUNT) runs x 21 benchmarks x $(BENCH_TIME_LIGHT) each (about 2 min with defaults)."
+	rm -f $(BENCH_OUT)
+	for i in $$(seq 1 $(BENCH_COUNT)); do \
+		echo "--- light run $$i/$(BENCH_COUNT) ---" | $(TIMESTAMP); \
+		set -o pipefail; \
+		go test -run '^$$' -benchmem -count 1 -benchtime $(BENCH_TIME_LIGHT) -bench Benchmark_light ./countline \
+			| tee -a $(BENCH_OUT) | $(TIMESTAMP); \
+	done
+	echo "bench_lightweight: done"
 
 .PHONY: bench_heavyweight
 bench_heavyweight:
-	@echo "Benchmarking with heavy sized datas (Large/Huge) ..."
-	@echo "(14 sub-benchmarks x 6 counts x 10s each = ~14 min)"
-	go test -benchmem -count 6 -benchtime 10s -bench Benchmark_heavy ./... | tee -a bench.txt
-	@echo "bench_heavyweight: done"
+	echo "=== Heavyweight benchmarks: Large/Huge x 7 implementations ==="
+	echo "    $(BENCH_COUNT) runs x 14 benchmarks x $(BENCH_TIME_HEAVY) each (about 15 min with defaults)."
+	echo "    Pauses of 10-30 s between lines are normal; the timestamps show it is still running."
+	for i in $$(seq 1 $(BENCH_COUNT)); do \
+		echo "--- heavy run $$i/$(BENCH_COUNT) ---" | $(TIMESTAMP); \
+		set -o pipefail; \
+		go test -run '^$$' -benchmem -count 1 -benchtime $(BENCH_TIME_HEAVY) -bench Benchmark_heavy ./countline \
+			| tee -a $(BENCH_OUT) | $(TIMESTAMP); \
+	done
+	echo "bench_heavyweight: done"
 
+# bench_giant_size is optional and not part of `make bench`: one pass over
+# the 1 GiB file takes minutes per implementation.
 .PHONY: bench_giant_size
 bench_giant_size:
-	@echo "Benchmarking with a giant size data (1 GiB) ..."
-	go test -benchmem -count 6 -bench Benchmark_giant ./... | tee -a bench.txt
-	@echo "bench_giant_size: done"
+	echo "=== Giant benchmark: 1 GiB x 7 implementations ==="
+	echo "    $(BENCH_COUNT) runs; expect minutes of silence per line. Timestamps show progress."
+	for i in $$(seq 1 $(BENCH_COUNT)); do \
+		echo "--- giant run $$i/$(BENCH_COUNT) ---" | $(TIMESTAMP); \
+		set -o pipefail; \
+		go test -run '^$$' -benchmem -count 1 -bench Benchmark_giant ./countline \
+			| tee -a $(BENCH_OUT) | $(TIMESTAMP); \
+	done
+	echo "bench_giant_size: done"
+
+# kill terminates orphaned benchmark processes. Aborting `make bench` (e.g.
+# Ctrl-C) can leave the compiled `countline.test` binary running in the
+# background, pegging a CPU core. This finds those binaries and kills them.
+#
+# BENCH_PATTERN matches this project's benchmark test binary only, so it will
+# not touch unrelated `go test` runs of other projects.
+BENCH_PATTERN := countline\.test.*-test\.bench
+.PHONY: kill
+kill:
+	echo "Searching for orphaned benchmark processes ..."
+	pids=$$(pgrep -f '$(BENCH_PATTERN)' || true); \
+	if [ -z "$$pids" ]; then \
+		echo "OK ... none found"; \
+	else \
+		echo "killing: $$pids"; \
+		kill $$pids 2>/dev/null || true; \
+		sleep 1; \
+		pids=$$(pgrep -f '$(BENCH_PATTERN)' || true); \
+		if [ -n "$$pids" ]; then \
+			echo "force-killing: $$pids"; \
+			kill -9 $$pids 2>/dev/null || true; \
+		fi; \
+		echo "OK ... killed"; \
+	fi
 
 # -----------------------------------------------------------------------------
 #  Docker installed only tests for various Go versions

@@ -13,7 +13,7 @@ You need to create and edit the following files:
 
 1. Create a new file for your new implementation.
 2. Add your function to the `TestCountLines_specs` function in [`alt_test.go`](./alt_test.go).
-3. Add your function to `targetFuncions` in [`../countline_benchmark_test.go`](../countline_benchmark_test.go).
+3. Add your function to `targetFunctions` in [`../countline_benchmark_test.go`](../countline_benchmark_test.go).
 
 ### Create a file
 
@@ -55,7 +55,7 @@ func TestCountLines_specs(t *testing.T) {
 - File name: `../countline_benchmark_test.go`
 
 ```diff
-var targetFuncions = map[string]struct {
+var targetFunctions = map[string]struct {
     fn func(io.Reader) (int, error)
 }{
     // Current implementation

@@ -3,13 +3,9 @@ package countline_test
 import (
 	"fmt"
 	"log"
-	"os"
-	"path/filepath"
 	"strings"
-	"testing"
 
 	"github.com/KEINOS/go-countline/countline"
-	"github.com/stretchr/testify/require"
 )
 
 func ExampleCountLines() {
@@ -45,38 +41,4 @@ func ExampleCountLines() {
 	// "\nHello\n" --> 2
 	// "\n\nHello" --> 3
 	// "\n\nHello\n" --> 3
-}
-
-func BenchmarkCountLines(b *testing.B) {
-	// 1 GiB size file
-	pathFile := filepath.Clean(filepath.Join("testdata", "data_Giant.txt"))
-
-	expectNumLines := 72323529
-
-	// Open file
-	fileReader, err := os.Open(pathFile)
-	if err != nil {
-		b.Fatal(err)
-	}
-
-	b.Cleanup(func() {
-		require.NoError(b, fileReader.Close())
-	})
-
-	b.ResetTimer() // Begin benchmark
-
-	// Run function
-	actualNumLines, err := countline.CountLines(fileReader)
-	if err != nil {
-		b.Fatal(err)
-	}
-
-	b.StopTimer() // End benchmark
-
-	if expectNumLines != actualNumLines {
-		b.Fatalf(
-			"test %v failed: expect=%d, actual=%d",
-			b.Name(), expectNumLines, actualNumLines,
-		)
-	}
 }

@@ -1,11 +1,11 @@
 package main
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
 
-	"errors"
 	"github.com/stretchr/testify/require"
 	"github.com/zenizh/go-capturer"
 )
@@ -75,7 +75,7 @@ func Test_main_missing_args(t *testing.T) {
 }
 
 //nolint:paralleltest // do not parallelize due to temporary changing global variables
-func TestExitOnError(t *testing.T) {
+func Test_exitOnError(t *testing.T) {
 	oldOsExit := osExit
 
 	defer func() {
@@ -89,7 +89,7 @@ func TestExitOnError(t *testing.T) {
 	}
 
 	out := capturer.CaptureStderr(func() {
-		ExitOnError(errTestError)
+		exitOnError(errTestError)
 	})
 
 	require.Equal(t, 1, capturedCode, "exit code should be 1")

@@ -1,13 +1,8 @@
-// To keep the repository size small, most of the test data is left uncommitted.
-// You must generate it yourself before testing and benchmarking.
-//
-// ```shellsession
-// $ # From the root of the repository
-// $ go generate ./...
-// ...
-// ```
-//
 //go:generate go run ./_gen
+
+// To keep the repository size small, most of the test data is left uncommitted.
+// Generate it before benchmarking, from the repository root: `go generate ./...`.
+
 package countline
 
 import (
@@ -23,11 +18,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// targetFuncions is a map of functions to be tested.
+// targetFunctions is a map of functions to be tested.
 // We are using a map to avoid the order of the tests.
 //
 //nolint:gochecknoglobals
-var targetFuncions = map[string]struct {
+var targetFunctions = map[string]struct {
 	fn func(io.Reader) (int, error)
 }{
 	// Current implementation
@@ -47,10 +42,11 @@ const (
 	GiantSize  = "giant"
 )
 
-// targetDatas is a list of files under `cl/testdata/` directory to be tested.
-// We are using a map to avoid the order of the tests.
+// targetDatas is a list of files under `countline/testdata/` directory to be
+// tested. We are using a map to avoid the order of the tests.
 //
-// These files are created via `go generate ...` command. See `cl/_gen/gen.go`.
+// These files are created via the `go generate ./...` command. See
+// `countline/_gen/gen_test_data.go`.
 //
 //nolint:gochecknoglobals
 var targetDatas = map[string]struct {
@@ -71,73 +67,43 @@ var targetDatas = map[string]struct {
 //  Benchmarks
 // ============================================================================
 
-// Benchmark of 1GiB file.
-//
-// Note: This benchmark is heavy and takes a long time (a minute on average) to
-// run. This benchmark runs alternate implementations as well thus it takes even
-// longer.
-func Benchmark_giant(b *testing.B) {
-	const (
-		nameFile      = "data_Giant.txt"
-		sizeFile      = 1073741832
-		expectNumLine = 72323529
-	)
-
-	pathFile := filepath.Join("testdata", nameFile)
-
-	// since targetFuncions is a map, the order of the tests is random.
-	for nameFunc, targetFunc := range targetFuncions {
-		nameTest := fmt.Sprintf("size-%s_%s_%s", readableSize(sizeFile), "Gigantic", nameFunc)
-
-		b.Run(nameTest, func(b *testing.B) {
-			for range b.N {
-				runBench(b, expectNumLine, pathFile, targetFunc.fn)
-			}
-		})
-	}
-}
-
 // Benchmark of light weight size files (Tiny, Small, Medium).
 func Benchmark_light(b *testing.B) {
-	for _, data := range targetDatas {
-		nameData := strings.TrimSuffix(strings.TrimPrefix(data.nameFile, "data_"), ".txt")
-
-		for nameFunc, targetFunc := range targetFuncions {
-			if data.typeSize != "medium" {
-				continue
-			}
-
-			pathFile := filepath.Join("testdata", data.nameFile)
-			nameTest := fmt.Sprintf("size-%s_%s_%s", readableSize(data.sizeFile), nameData, nameFunc)
-
-			b.Run(nameTest, func(b *testing.B) {
-				for range b.N {
-					expectNumLine := data.numLine
-					runBench(b, expectNumLine, pathFile, targetFunc.fn)
-				}
-			})
-		}
-	}
+	benchEachImplementation(b, MediumSize)
 }
 
-// Benchmark of heavy weight size files (Large, Huge, Giant).
+// Benchmark of heavy weight size files (Large, Huge).
 func Benchmark_heavy(b *testing.B) {
+	benchEachImplementation(b, LargeSize)
+}
+
+// Benchmark of the 1 GiB file.
+//
+// Note: This benchmark is heavy and takes a long time (a minute on average per
+// implementation) to run.
+func Benchmark_giant(b *testing.B) {
+	benchEachImplementation(b, GiantSize)
+}
+
+// benchEachImplementation benchmarks every registered implementation against
+// each test data file of the given size type.
+func benchEachImplementation(b *testing.B, typeSize string) {
+	b.Helper()
+
 	for _, data := range targetDatas {
+		if data.typeSize != typeSize {
+			continue
+		}
+
 		nameData := strings.TrimSuffix(strings.TrimPrefix(data.nameFile, "data_"), ".txt")
+		pathFile := filepath.Join("testdata", data.nameFile)
 
-		for nameFunc, targetFunc := range targetFuncions {
-			if data.typeSize != "large" {
-				continue
-			}
-
-			pathFile := filepath.Join("testdata", data.nameFile)
+		// since targetFunctions is a map, the order of the tests is random.
+		for nameFunc, targetFunc := range targetFunctions {
 			nameTest := fmt.Sprintf("size-%s_%s_%s", readableSize(data.sizeFile), nameData, nameFunc)
 
 			b.Run(nameTest, func(b *testing.B) {
-				for range b.N {
-					expectNumLine := data.numLine
-					runBench(b, expectNumLine, pathFile, targetFunc.fn)
-				}
+				runBench(b, data.numLine, int64(data.sizeFile), pathFile, targetFunc.fn)
 			})
 		}
 	}
@@ -212,36 +178,35 @@ func BenchmarkCountLines_Memory(b *testing.B) {
 //  Helper functions
 // ----------------------------------------------------------------------------
 
+// runBench measures fn over a real file (open + count + close) and reports
+// throughput in bytes per second. It uses b.Loop so the benchmark converges on
+// -benchtime instead of running forever.
+//
 //nolint:varnamelen // "fn" is short for the scope of its usage but allow it
-func runBench(b *testing.B, expectNumLines int, pathFile string, fn func(io.Reader) (int, error)) {
+func runBench(b *testing.B, expectNumLines int, sizeFile int64, pathFile string, fn func(io.Reader) (int, error)) {
 	b.Helper()
 
-	fileReader, err := os.Open(filepath.Clean(pathFile))
-	if err != nil {
-		b.Fatal(err)
-	}
+	cleanPath := filepath.Clean(pathFile)
 
-	defer func() {
+	b.SetBytes(sizeFile)
+	b.ReportAllocs()
+
+	for b.Loop() {
+		fileReader, err := os.Open(cleanPath)
+		if err != nil {
+			b.Fatal(err)
+		}
+
+		actual, err := fn(fileReader)
+		if err != nil {
+			b.Fatal(err)
+		}
+
 		require.NoError(b, fileReader.Close())
-	}()
 
-	b.ResetTimer() // Begin benchmark
-
-	countLines, err := fn(fileReader)
-	if err != nil {
-		b.Fatal(err)
-	}
-
-	b.StopTimer() // End benchmark
-
-	expectLineCount := expectNumLines
-	actualLineCount := countLines
-
-	if expectLineCount != actualLineCount {
-		b.Fatalf(
-			"test %v failed: expect=%d, actual=%d",
-			b.Name(), expectLineCount, actualLineCount,
-		)
+		if actual != expectNumLines {
+			b.Fatalf("test %v failed: expect=%d, actual=%d", b.Name(), expectNumLines, actual)
+		}
 	}
 }
 

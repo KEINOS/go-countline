@@ -1,6 +1,6 @@
 # Workflow/Actions to Automate
 
-- [codeQL-analysis.yml](codeQL-analysis.yml) (on push):
+- [codeQL-analysis.yaml](codeQL-analysis.yaml) (on push):
   - Runs CodeQL to scan Go code for security issues.
   - See the GitHub Docs guide for configuring code scanning.
 - [golangci-lint.yaml](golangci-lint.yaml) (on push):

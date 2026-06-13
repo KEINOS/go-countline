@@ -1,3 +1,7 @@
+// Package countline counts LF-delimited lines from an io.Reader.
+//
+// Unlike `wc -l`, it also counts a final line that does not end with a line
+// feed.
 package countline
 
 import (
@@ -38,56 +42,48 @@ func countLines(inputReader io.Reader, maxInt uint) (int, error) {
 	lastByte := byte('\n')
 
 	for {
-		numRead, err := inputReader.Read(buf)
+		numRead, errRead := inputReader.Read(buf)
 		if numRead > 0 {
 			chunk := buf[:numRead]
-
 			found := uint(bytes.Count(chunk, []byte{'\n'}))
 
-			err := addLineBreaks(&count, found, maxInt)
+			newCount, err := addChecked(count, found, maxInt)
 			if err != nil {
 				return 0, err
 			}
 
+			count = newCount
 			hasData = true
 			lastByte = chunk[len(chunk)-1]
 		}
 
-		if err != nil {
-			if err == io.EOF {
+		if errRead != nil {
+			if errRead == io.EOF {
 				break
 			}
 
-			return 0, fmt.Errorf("%w: %w", ErrReadFailed, err)
+			return 0, fmt.Errorf("%w: %w", ErrReadFailed, errRead)
 		}
 	}
 
+	// A final line with content but no trailing line feed still counts.
 	if hasData && lastByte != '\n' {
-		err := addFinalLine(&count, maxInt)
-		if err != nil {
-			return 0, err
+		if count == maxInt {
+			return 0, ErrLineCountOverflow
 		}
+
+		count++
 	}
 
 	return int(count), nil
 }
 
-func addLineBreaks(count *uint, found, maxInt uint) error {
-	if found > maxInt || *count > maxInt-found {
-		return ErrLineCountOverflow
+// addChecked returns count+found, or ErrLineCountOverflow if the sum would
+// exceed maxInt.
+func addChecked(count, found, maxInt uint) (uint, error) {
+	if found > maxInt || count > maxInt-found {
+		return 0, ErrLineCountOverflow
 	}
 
-	*count += found
-
-	return nil
-}
-
-func addFinalLine(count *uint, maxInt uint) error {
-	if *count == maxInt {
-		return ErrLineCountOverflow
-	}
-
-	*count++
-
-	return nil
+	return count + found, nil
 }

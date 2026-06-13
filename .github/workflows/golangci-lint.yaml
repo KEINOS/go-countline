@@ -22,4 +22,4 @@ jobs:
         uses: golangci/golangci-lint-action@v9
         with:
           version: latest
-          args: --config ./.golangci.yml ./... ./cl/_alt ./cl/_gen
+          args: --config ./.golangci.yml ./... ./countline/_alt ./countline/_gen

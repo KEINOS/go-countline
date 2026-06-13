@@ -5,7 +5,7 @@
 # go-countline
 
 Go package
-"[go-countline](https://github.com/KEINOS/go-countline/cl)" does one thing:
+"[go-countline](https://github.com/KEINOS/go-countline)" does one thing:
 **count lines in an `io.Reader` quickly**.
 
 Unlike `wc -l`, `go-countline` counts a final line even when the input does not

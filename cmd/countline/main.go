@@ -10,9 +10,9 @@ import (
 	"github.com/KEINOS/go-countline/countline"
 )
 
-var msgHelp = `cl - Count the number of lines in a file.
+var msgHelp = `countline - Count the number of lines in a file.
 Usage:
-	cl [file]
+	countline [file]
 `
 
 var errInvalidArgs = errors.New("invalid number of arguments")
@@ -24,24 +24,25 @@ func main() {
 	const lenArgs = 2 // program name and the file path
 
 	if len(os.Args) != lenArgs {
-		ExitOnError(errInvalidArgs)
+		exitOnError(errInvalidArgs)
 	}
 
-	pathFile := os.Args[1]
-	pathFile, err := filepath.Abs(filepath.Clean(pathFile))
-	ExitOnError(err)
+	pathFile, err := filepath.Abs(filepath.Clean(os.Args[1]))
+	exitOnError(err)
 
 	//nolint:gosec // due to the nature of CLI, allow opening any file
 	osFile, err := os.Open(pathFile)
-	ExitOnError(err)
+	exitOnError(err)
 
 	count, err := countline.CountLines(osFile)
-	ExitOnError(err)
+	exitOnError(err)
+
+	exitOnError(osFile.Close())
 
 	fmt.Println(count)
 }
 
-func ExitOnError(err error) {
+func exitOnError(err error) {
 	if err != nil {
 		fmt.Fprintln(os.Stderr, msgHelp)
 
