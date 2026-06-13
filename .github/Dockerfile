@@ -10,11 +10,10 @@ ARG VARIANT="alpine"
 FROM golang:${VARIANT}
 
 RUN apk add --no-cache \
+    bash \
     git \
     gcc musl-dev \
-    make \
-    && \
-    wget -O- -nv https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s latest
+    make
 
 WORKDIR /workspaces
 
