@@ -1,5 +1,5 @@
 # =============================================================================
-# Docker Compose file for testing on Go versions 1.16 to the latest.
+# Docker Compose file for testing on the supported Go range.
 # =============================================================================
 # It is recommended to run specifying a specific Go version and not at once.
 #
@@ -29,7 +29,7 @@ services:
         VARIANT: alpine
     volumes:
       - ..:/workspaces
-      - TEST_DATA:/workspaces/cl/testdata
+      - TEST_DATA:/workspaces/countline/testdata
     entrypoint: [ "./.github/run_go_mod_tidy.sh" ]
   # Service min runs the tests on minimum supported Go version
   min:
@@ -37,11 +37,11 @@ services:
       context: ..
       dockerfile: ./.github/Dockerfile
       args:
-        VARIANT: 1.24-alpine
+        VARIANT: 1.26-alpine
     volumes:
       - ..:/workspaces
       - GO_PKG_MOD:/go/pkg/mod
-      - TEST_DATA:/workspaces/cl/testdata
+      - TEST_DATA:/workspaces/countline/testdata
   # Service latest runs the tests on latest Go docker image
   latest:
     build:
@@ -52,4 +52,4 @@ services:
     volumes:
       - ..:/workspaces
       - GO_PKG_MOD:/go/pkg/mod
-      - TEST_DATA:/workspaces/cl/testdata
+      - TEST_DATA:/workspaces/countline/testdata

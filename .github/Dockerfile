@@ -1,5 +1,5 @@
 # =============================================================================
-#  Test Container for Vaious Go Versions (Last Updated: 2022-08-05)
+#  Test Container for Various Go Versions
 # =============================================================================
 # Default version: golang:alpine
 ARG VARIANT="alpine"
@@ -10,11 +10,10 @@ ARG VARIANT="alpine"
 FROM golang:${VARIANT}
 
 RUN apk add --no-cache \
+    bash \
     git \
     gcc musl-dev \
-    make \
-    && \
-    wget -O- -nv https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s latest
+    make
 
 WORKDIR /workspaces
 

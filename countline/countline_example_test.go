@@ -1,11 +1,11 @@
-package cl_test
+package countline_test
 
 import (
 	"fmt"
 	"log"
 	"strings"
 
-	"github.com/KEINOS/go-countline/cl"
+	"github.com/KEINOS/go-countline/countline"
 )
 
 func ExampleCountLines() {
@@ -24,7 +24,7 @@ func ExampleCountLines() {
 	} {
 		readerFile := strings.NewReader(sample.Input)
 
-		count, err := cl.CountLines(readerFile)
+		count, err := countline.CountLines(readerFile)
 		if err != nil {
 			log.Fatal(err)
 		}

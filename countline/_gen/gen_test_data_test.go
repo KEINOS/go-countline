@@ -1,13 +1,20 @@
 package main
 
 import (
+	"io"
 	"os"
 	"path/filepath"
 	"testing"
 
-	"github.com/pkg/errors"
+	"errors"
 	"github.com/stretchr/testify/require"
 	"github.com/zenizh/go-capturer"
+)
+
+var (
+	errForcedClose = errors.New("forced close error")
+	errForcedFlush = errors.New("forced flush error")
+	errForcedExit  = errors.New("forced error")
 )
 
 //nolint:paralleltest // do not parallelize due to temporary changing the global variable
@@ -86,7 +93,7 @@ func Test_exitOnError(t *testing.T) {
 	}
 
 	out := capturer.CaptureStderr(func() {
-		exitOnError(errors.New("forced error"))
+		exitOnError(errForcedExit)
 	})
 
 	require.Equal(t, 1, capturedStatus, "it should exit with status 1")
@@ -96,10 +103,10 @@ func Test_exitOnError(t *testing.T) {
 //nolint:paralleltest // do not parallelize due to temporary changing global variables
 func Test_genFiles_fail_generate_file(t *testing.T) {
 	// Mock the bufio.Writer to fail
-	forceFailWraite = true
+	forceFailWrite = true
 
 	defer func() {
-		forceFailWraite = false
+		forceFailWrite = false
 	}()
 
 	// Mock testdata and os.Exit function
@@ -151,6 +158,123 @@ func Test_genFile_file_is_dir(t *testing.T) {
 	require.Contains(t, err.Error(), "failed to open/create file", "it should contain the error reason")
 }
 
+//nolint:paralleltest // do not parallelize due to temporary changing function variables
+func Test_genFile_close_error(t *testing.T) {
+	oldCreateFile := createFile
+	oldNewBufferedWriter := newBufferedWriter
+
+	defer func() {
+		createFile = oldCreateFile
+		newBufferedWriter = oldNewBufferedWriter
+	}()
+
+	createFile = func(_ string) (io.WriteCloser, error) {
+		return &fakeWriteCloser{
+			closeErr: errForcedClose,
+			writeErr: nil,
+		}, nil
+	}
+	newBufferedWriter = func(writer io.Writer) bufferedWriter {
+		return oldNewBufferedWriter(writer)
+	}
+
+	err := genFile(16, filepath.Join(t.TempDir(), "close_error.txt"))
+
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "failed to close file")
+	require.Contains(t, err.Error(), "forced close error")
+}
+
+//nolint:paralleltest // do not parallelize due to temporary changing function variables
+func Test_genFile_flush_error(t *testing.T) {
+	oldCreateFile := createFile
+	oldNewBufferedWriter := newBufferedWriter
+
+	defer func() {
+		createFile = oldCreateFile
+		newBufferedWriter = oldNewBufferedWriter
+	}()
+
+	createFile = func(_ string) (io.WriteCloser, error) {
+		return &fakeWriteCloser{
+			closeErr: nil,
+			writeErr: nil,
+		}, nil
+	}
+	newBufferedWriter = func(_ io.Writer) bufferedWriter {
+		return &fakeBufferedWriter{
+			flushErr: errForcedFlush,
+			writeErr: nil,
+		}
+	}
+
+	err := genFile(16, filepath.Join(t.TempDir(), "flush_error.txt"))
+
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "failed to flush buffer")
+	require.Contains(t, err.Error(), "forced flush error")
+}
+
+//nolint:paralleltest // do not parallelize due to temporary changing function variables
+func Test_genFile_flush_error_with_existing_error(t *testing.T) {
+	oldCreateFile := createFile
+	oldNewBufferedWriter := newBufferedWriter
+
+	defer func() {
+		createFile = oldCreateFile
+		newBufferedWriter = oldNewBufferedWriter
+	}()
+
+	createFile = func(_ string) (io.WriteCloser, error) {
+		return &fakeWriteCloser{
+			closeErr: nil,
+			writeErr: nil,
+		}, nil
+	}
+	newBufferedWriter = func(_ io.Writer) bufferedWriter {
+		return &fakeBufferedWriter{
+			flushErr: errForcedFlush,
+			writeErr: errForcedWrite,
+		}
+	}
+
+	err := genFile(16, filepath.Join(t.TempDir(), "flush_after_write_error.txt"))
+
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "failed to flush buffer")
+	require.Contains(t, err.Error(), "failed to write line")
+}
+
+//nolint:paralleltest // do not parallelize due to temporary changing function variables
+func Test_genFile_close_error_with_existing_error(t *testing.T) {
+	oldCreateFile := createFile
+	oldNewBufferedWriter := newBufferedWriter
+
+	defer func() {
+		createFile = oldCreateFile
+		newBufferedWriter = oldNewBufferedWriter
+	}()
+
+	createFile = func(_ string) (io.WriteCloser, error) {
+		return &fakeWriteCloser{
+			closeErr: errForcedClose,
+			writeErr: nil,
+		}, nil
+	}
+	newBufferedWriter = func(_ io.Writer) bufferedWriter {
+		return &fakeBufferedWriter{
+			flushErr: errForcedFlush,
+			writeErr: nil,
+		}
+	}
+
+	err := genFile(16, filepath.Join(t.TempDir(), "close_after_flush_error.txt"))
+
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "failed to close file")
+	require.Contains(t, err.Error(), "failed to flush buffer")
+}
+
 //nolint:paralleltest // do not parallelize due to temporary changing the global variable
 func TestIsDocker(t *testing.T) {
 	oldPathDockerEnv := pathDockerEnv
@@ -167,4 +291,38 @@ func TestIsDocker(t *testing.T) {
 
 	// Test in Docker
 	require.True(t, IsDocker(), "it should return true if running in Docker")
+}
+
+type fakeWriteCloser struct {
+	closeErr error
+	writeErr error
+}
+
+func (w *fakeWriteCloser) Write(data []byte) (int, error) {
+	if w.writeErr != nil {
+		return 0, w.writeErr
+	}
+
+	return len(data), nil
+}
+
+func (w *fakeWriteCloser) Close() error {
+	return w.closeErr
+}
+
+type fakeBufferedWriter struct {
+	flushErr error
+	writeErr error
+}
+
+func (w *fakeBufferedWriter) Write(data []byte) (int, error) {
+	if w.writeErr != nil {
+		return 0, w.writeErr
+	}
+
+	return len(data), nil
+}
+
+func (w *fakeBufferedWriter) Flush() error {
+	return w.flushErr
 }

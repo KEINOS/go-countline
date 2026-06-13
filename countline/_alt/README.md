@@ -1,23 +1,23 @@
 # Alternate implementations of the CountLines function
 
-This directory contains alternate implementations of the CountLines function.
+This directory contains alternate implementations of the `CountLines` function.
 
-- Current implementation: alt6.go
+- Current implementation: `countline/countline.go`
 
-New implementations must be placed in this directory first and Pull-Requested.
-After benchmarking on code-review, they may be swapped into the main function.
+New implementations should be added here first. After benchmarking and review,
+the fastest correct implementation may be moved into the main package.
 
 ## Files to change
 
-You need to create and edit the following 3 files:
+You need to create and edit the following files:
 
 1. Create a new file for your new implementation.
 2. Add your function to the `TestCountLines_specs` function in [`alt_test.go`](./alt_test.go).
-3. Add your function to the `targetFuncions` variable in [`../benchmarks_test.go`](../benchmarks_test.go).
+3. Add your function to `targetFunctions` in [`../countline_benchmark_test.go`](../countline_benchmark_test.go).
 
 ### Create a file
 
-- File name: `altN.go` where `N` is the next available number. e.g. `alt4.go`
+- File name: `altN.go`, where `N` is the next available number.
 
 ```go
 // Replace the `N` in `CountLinesAltN` with the latest number of
@@ -52,19 +52,19 @@ func TestCountLines_specs(t *testing.T) {
 
 ### Add the function to the benchmark list
 
-- File name: `../benchmarks_test.go`
+- File name: `../countline_benchmark_test.go`
 
 ```diff
-var targetFuncions = map[string]struct {
+var targetFunctions = map[string]struct {
     fn func(io.Reader) (int, error)
 }{
     // Current implementation
     "CountLinesCurr": {CountLines},
     // Alternate implementation. See alt_test.go.
-    "CountLinesAlt1": {_alt.CountLinesAlt1},
-    "CountLinesAlt2": {_alt.CountLinesAlt2},
-    "CountLinesAlt3": {_alt.CountLinesAlt3},
-+   "CountLinesAlt4": {_alt.CountLinesAlt4},
+    "CountLinesAlt1": {alt.CountLinesAlt1},
+    "CountLinesAlt2": {alt.CountLinesAlt2},
+    "CountLinesAlt3": {alt.CountLinesAlt3},
++   "CountLinesAlt4": {alt.CountLinesAlt4},
 }
 
 ```
@@ -73,7 +73,7 @@ var targetFuncions = map[string]struct {
 
 You need the following to be covered in your implementation:
 
-- **Pass the tests** in all cases of [`cl/spec/spec.go`](../spec/spec.go).
+- **Pass the tests** in all cases of [`countline/spec/spec.go`](../spec/spec.go).
 - **Pass the lint and static analysis checks** of [golangci-lint](https://golangci-lint.run/).
   - Run: `golangci-lint run`
   - For the rules, see: [../../.golangci.yml](../../.golangci.yml)
@@ -86,6 +86,6 @@ $ # Runs unit tests, lints, and code coverage.
 $ make test
 ...
 
-$ make benchmark
+$ make bench
 ...
 ```

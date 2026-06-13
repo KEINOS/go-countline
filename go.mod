@@ -1,9 +1,8 @@
 module github.com/KEINOS/go-countline
 
-go 1.24.0
+go 1.26.0
 
 require (
-	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.11.1
 	github.com/zenizh/go-capturer v0.0.0-20211219060012-52ea6c8fed04
 	golang.org/x/text v0.32.0

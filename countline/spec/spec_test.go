@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/KEINOS/go-countline/cl"
+	"github.com/KEINOS/go-countline/countline"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -54,7 +54,7 @@ func TestRunSpecTest(t *testing.T) {
 	t.Parallel()
 
 	require.NotPanics(t, func() {
-		RunSpecTest(t, "CountLines", cl.CountLines)
+		RunSpecTest(t, "CountLines", countline.CountLines)
 	})
 }
 

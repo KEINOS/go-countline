@@ -6,24 +6,20 @@ run:
   allow-parallel-runners: true
 linters:
   default: all
-  exclusions:
-    paths:
-      - .github
-  settings:
-    varnamelen:
-      ignore-decls:
-        - t testing.T
-        - e error
-        - i int
-        - j int
-        - ii int
-        - jj int
-        - T any
   disable:
-    # Disabled due to wsl deprecation and new wsl_v5
+    # Deprecated linters
     - wsl
-    # Disabled due to testing private function purpose
-    - testpackage
-    # Disabled due to global variables for package-level settings
-    - gochecknoglobals
+    - gomodguard
+    # Conflict with wsl_v5
+    - whitespace
+    # == Project policy ==
     - depguard
+    - testpackage
+  settings:
+    paralleltest:
+      ignore-missing: false
+    varnamelen:
+      ignore-names:
+        - ok
+        - t
+        - tt

@@ -3,26 +3,23 @@ package alt
 import (
 	"bufio"
 	"bytes"
+	"fmt"
 	"io"
 	"sync"
 	"sync/atomic"
-
-	"github.com/pkg/errors"
 )
 
-// ----------------------------------------------------------------------------
-//  CountLinesAlt2
-// ----------------------------------------------------------------------------
-
 // CountLinesAlt2 uses bufio.Reader and goroutines to count the number of lines.
-//
-//nolint:funlen,cyclop // only exceeds 4 lines(74/70), complexity of 1 cycle(11/19)
 func CountLinesAlt2(inputReader io.Reader) (int, error) {
-	// maxInt is the maximum possitive value of int on current system in uint.
 	const maxInt = ^uint(0) >> 1
 
+	return countLinesAlt2(inputReader, maxInt)
+}
+
+//nolint:cyclop,funlen // complexity and length are inherited from the original benchmark implementation.
+func countLinesAlt2(inputReader io.Reader, maxInt uint) (int, error) {
 	if inputReader == nil {
-		return 0, errors.New("given reader is nil")
+		return 0, errNilReader
 	}
 
 	wg := new(sync.WaitGroup) //nolint:varnamelen
@@ -36,38 +33,30 @@ func CountLinesAlt2(inputReader io.Reader) (int, error) {
 		numIte++
 		buf := make([]byte, bufSize*numIte)
 
-		numRead, err := bufReader.Read(buf) // loading chunk into buffer
+		numRead, err := bufReader.Read(buf)
 		if err != nil {
 			if err == io.EOF {
 				break
 			}
 
-			return 0, errors.Wrap(err, "failed to read from reader")
+			return 0, fmt.Errorf("failed to read from reader: %w", err)
 		}
 
 		task := buf[:numRead]
 		lastBuf = task
 
-		wg.Add(1)
-
-		go func() {
+		wg.Go(func() {
 			found := bytes.Count(task, []byte{'\n'})
 
-			// add only if "found" is less than maxInt
 			if found < int(maxInt) {
-				// count++ safely
-				//
-				//nolint:gosec // oveflow is checked above
+				//nolint:gosec // overflow is checked above
 				atomic.AddUint64(&count, uint64(found))
 			}
-
-			wg.Done()
-		}()
+		})
 	}
 
 	wg.Wait()
 
-	// Detect the file ends without a line break and count up if so.
 	lenLastBuf := len(lastBuf)
 	hasFragment := false
 
@@ -85,12 +74,11 @@ func CountLinesAlt2(inputReader io.Reader) (int, error) {
 	}
 
 	if hasFragment {
-		atomic.AddUint64(&count, 1) // count++ safely
+		atomic.AddUint64(&count, 1)
 	}
 
-	// Check overflow on 32bit systems
 	if count > uint64(maxInt) {
-		return 0, errors.New("number of lines exceeds the maximum value of int")
+		return 0, errLineCountOverflow
 	}
 
 	return int(count), nil

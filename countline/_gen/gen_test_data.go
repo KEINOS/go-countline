@@ -5,12 +5,14 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
-
-	"github.com/pkg/errors"
 )
+
+var errForcedWrite = errors.New("forced error")
 
 const KiB = 1024
 const MiB = 1024 * KiB
@@ -56,23 +58,37 @@ func genFiles(pathDirBase string) error {
 		// Skip if file already exists
 		infoFile, err := os.Stat(pathFile)
 		if err == nil && infoFile.Size() >= int64(dataSize) {
-			fmt.Printf("  - %s ... OK (exits)\n", pathFile)
+			fmt.Printf("  - %s ... OK (exists)\n", pathFile)
 
 			continue
 		}
 
 		err = genFile(dataSize, pathFile)
 		if err != nil {
-			return errors.Wrap(err, "failed to generate file")
+			return fmt.Errorf("failed to generate file: %w", err)
 		}
 	}
 
 	return nil
 }
 
-// forceFailWraite forces the writer to fail if true. It is only used for testing as
+// forceFailWrite forces the writer to fail if true. It is only used for testing as
 // a dependency injection.
-var forceFailWraite = false
+var forceFailWrite = false
+
+type bufferedWriter interface {
+	io.Writer
+	Flush() error
+}
+
+var createFile = func(name string) (io.WriteCloser, error) {
+	//nolint:gosec // path is intentionally provided by the generator caller.
+	return os.Create(name)
+}
+
+var newBufferedWriter = func(writer io.Writer) bufferedWriter {
+	return bufio.NewWriter(writer)
+}
 
 //nolint:cyclop,funlen // acceptable complexity and length for this function
 func genFile(sizeFile int, pathFile string) (retErr error) {
@@ -80,31 +96,31 @@ func genFile(sizeFile int, pathFile string) (retErr error) {
 
 	fmt.Printf("  - %s ...\r", pathFile)
 
-	fileP, err := os.Create(pathFile)
+	fileP, err := createFile(pathFile)
 	if err != nil {
-		return errors.Wrap(err, "failed to open/create file")
+		return fmt.Errorf("failed to open/create file: %w", err)
 	}
 
 	defer func() {
 		err := fileP.Close()
 		if err != nil {
 			if retErr == nil {
-				retErr = errors.Wrap(err, "failed to close file")
+				retErr = fmt.Errorf("failed to close file: %w", err)
 			} else {
-				retErr = errors.Wrap(retErr, "failed to close file")
+				retErr = fmt.Errorf("failed to close file: %w", retErr)
 			}
 		}
 	}()
 
-	bufP := bufio.NewWriter(fileP)
+	bufP := newBufferedWriter(fileP)
 
 	defer func() {
 		err := bufP.Flush()
 		if err != nil {
 			if retErr == nil {
-				retErr = errors.Wrap(err, "failed to flush buffer")
+				retErr = fmt.Errorf("failed to flush buffer: %w", err)
 			} else {
-				retErr = errors.Wrap(retErr, "failed to flush buffer")
+				retErr = fmt.Errorf("failed to flush buffer: %w", retErr)
 			}
 		}
 	}()
@@ -116,12 +132,12 @@ func genFile(sizeFile int, pathFile string) (retErr error) {
 		countLine++
 
 		written, err := fmt.Fprintf(bufP, "line: %d\n", countLine)
-		if err != nil || forceFailWraite {
-			if forceFailWraite {
-				err = errors.New("forced error")
+		if err != nil || forceFailWrite {
+			if forceFailWrite {
+				err = errForcedWrite
 			}
 
-			return errors.Wrap(err, "failed to write line")
+			return fmt.Errorf("failed to write line: %w", err)
 		}
 
 		totalSize += int64(written)

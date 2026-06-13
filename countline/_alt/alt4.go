@@ -2,15 +2,14 @@ package alt
 
 import (
 	"bufio"
+	"fmt"
 	"io"
-
-	"github.com/pkg/errors"
 )
 
 // CountLinesAlt4 uses atomic and goroutines to count the number of lines.
 func CountLinesAlt4(inputReader io.Reader) (int, error) {
 	if inputReader == nil {
-		return 0, errors.New("given reader is nil")
+		return 0, errNilReader
 	}
 
 	bufReader := bufio.NewReader(inputReader)
@@ -23,7 +22,7 @@ func CountLinesAlt4(inputReader io.Reader) (int, error) {
 				break
 			}
 
-			return 0, errors.Wrap(err, "failed to read from reader")
+			return 0, fmt.Errorf("failed to read from reader: %w", err)
 		}
 
 		if isPrefix {

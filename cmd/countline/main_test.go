@@ -1,14 +1,16 @@
 package main
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
 
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 	"github.com/zenizh/go-capturer"
 )
+
+var errTestError = errors.New("test error")
 
 //nolint:paralleltest // do not parallelize due to temporary changing global variables
 func Test_main(t *testing.T) {
@@ -26,8 +28,12 @@ func Test_main(t *testing.T) {
 		capturedCode = code
 	}
 
-	pathData := filepath.Join("..", "..", "cl", "testdata", "data_Giant.txt")
-	expect := "72323529"
+	// Write a small file with a known line count so the test is self-contained
+	// and does not depend on the generated (multi-GiB) test data.
+	pathData := filepath.Join(t.TempDir(), "data.txt")
+	require.NoError(t, os.WriteFile(pathData, []byte("line1\nline2\nline3\n"), 0o600))
+
+	expect := "3"
 
 	os.Args = []string{t.Name(), pathData}
 
@@ -73,7 +79,7 @@ func Test_main_missing_args(t *testing.T) {
 }
 
 //nolint:paralleltest // do not parallelize due to temporary changing global variables
-func TestExitOnError(t *testing.T) {
+func Test_exitOnError(t *testing.T) {
 	oldOsExit := osExit
 
 	defer func() {
@@ -87,7 +93,7 @@ func TestExitOnError(t *testing.T) {
 	}
 
 	out := capturer.CaptureStderr(func() {
-		ExitOnError(errors.New("test error"))
+		exitOnError(errTestError)
 	})
 
 	require.Equal(t, 1, capturedCode, "exit code should be 1")

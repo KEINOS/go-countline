@@ -78,7 +78,7 @@ var DataCountLines = []struct {
 		ExpectOut: 3,
 	},
 	{
-		Reason:    "'<large line>\\n<EOF>' --> long string with a line break should be onw",
+		Reason:    "'<large line>\\n<EOF>' --> long string with a line break should be one",
 		Input:     GetStrDummyLines(bufio.MaxScanTokenSize*2, 1),
 		ExpectOut: 1,
 	},
@@ -97,7 +97,8 @@ var DataCountLines = []struct {
 //  RunSpecTest
 // ----------------------------------------------------------------------------
 
-// RunSpecTest is a helper function to run the specifcations of LineCount function.
+// RunSpecTest is a helper function to run the specifications of the CountLines
+// function.
 // Alternate implementations (_alt.*) must pass this test as well.
 //
 //nolint:varnamelen // fn is short for the scope of its usage but leave it as is.
@@ -150,13 +151,6 @@ func RunSpecTest(t *testing.T, nameFn string, fn func(io.Reader) (int, error)) {
 func GetStrDummyLines(sizeLine, numLine int64) string {
 	dataLine := genOneLine(sizeLine)
 
-	// result := ""
-	// for range numLine {
-	// 	result += string(dataLine)
-	// }
-	//
-	// return result
-
 	var strBldr strings.Builder
 
 	for range numLine {
@@ -170,22 +164,19 @@ func GetStrDummyLines(sizeLine, numLine int64) string {
 //  genOneLine
 // ----------------------------------------------------------------------------
 
+// genOneLine returns a line of 'a's of the given size, ending with a line feed.
 func genOneLine(sizeLine int64) []byte {
 	if sizeLine <= 0 {
 		return []byte{}
 	}
 
-	const LF = byte(0x0a) //nolint:varnamelen
-
 	dataLine := make([]byte, sizeLine)
 
-	for i := range sizeLine {
+	for i := range dataLine {
 		dataLine[i] = 'a'
-
-		if i == sizeLine-1 {
-			dataLine[i] = LF // \n
-		}
 	}
+
+	dataLine[sizeLine-1] = '\n'
 
 	return dataLine
 }
