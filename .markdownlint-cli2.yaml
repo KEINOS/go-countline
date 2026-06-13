@@ -1,0 +1,8 @@
+config:
+  first-line-heading: false
+  no-inline-html: false
+  table-column-style: false
+  # Disable strict line length enforcement (handled by conventions)
+  line-length: false
+  # Allow multiple top-level headings (temporary)
+  single-h1: false

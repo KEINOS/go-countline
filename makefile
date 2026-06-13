@@ -9,6 +9,8 @@
 #                    check.
 #      make bench ... Run benchmark. `benchstat` is required to run this. See
 #                     the comment in the "bench:" section.
+#      make bench_vs_wc ... Compare the countline CLI against `wc -l` on the
+#                           1 GiB test file. `hyperfine` is required.
 #      make kill ... Kill orphaned benchmark processes left behind by an
 #                    aborted `make bench` run.
 #      make test_docker ... Run unit tests with different versions of Go in a
@@ -101,8 +103,20 @@ BENCH_TIME_LIGHT ?= 1s
 BENCH_TIME_HEAVY ?= 10s
 BENCH_OUT ?= bench.txt
 
-# timestamp prefixes every line piped into it with the current time.
-TIMESTAMP := while IFS= read -r line; do printf '[%s] %s\n' "$$(date +%H:%M:%S)" "$$line"; done
+# run_bench_suite runs one benchmark suite BENCH_COUNT times, appending each run
+# to BENCH_OUT and timestamping every line so progress stays visible (a moving
+# timestamp means the run is alive, not hung).
+#   $(1) = label   $(2) = extra `go test` flags   $(3) = -bench pattern
+define run_bench_suite
+	for i in $$(seq 1 $(BENCH_COUNT)); do \
+		echo "--- $(1) run $$i/$(BENCH_COUNT) ---" \
+			| while IFS= read -r l; do printf '[%s] %s\n' "$$(date +%H:%M:%S)" "$$l"; done; \
+		set -o pipefail; \
+		go test -run '^$$' -benchmem -count 1 $(2) -bench $(3) ./countline \
+			| tee -a $(BENCH_OUT) \
+			| while IFS= read -r l; do printf '[%s] %s\n' "$$(date +%H:%M:%S)" "$$l"; done; \
+	done
+endef
 
 .PHONY: bench
 bench: check_install_benchstat gen_data bench_lightweight bench_heavyweight
@@ -115,12 +129,7 @@ bench_lightweight:
 	echo "=== Lightweight benchmarks: Tiny/Small/Medium x 7 implementations ==="
 	echo "    $(BENCH_COUNT) runs x 21 benchmarks x $(BENCH_TIME_LIGHT) each (about 2 min with defaults)."
 	rm -f $(BENCH_OUT)
-	for i in $$(seq 1 $(BENCH_COUNT)); do \
-		echo "--- light run $$i/$(BENCH_COUNT) ---" | $(TIMESTAMP); \
-		set -o pipefail; \
-		go test -run '^$$' -benchmem -count 1 -benchtime $(BENCH_TIME_LIGHT) -bench Benchmark_light ./countline \
-			| tee -a $(BENCH_OUT) | $(TIMESTAMP); \
-	done
+	$(call run_bench_suite,light,-benchtime $(BENCH_TIME_LIGHT),Benchmark_light)
 	echo "bench_lightweight: done"
 
 .PHONY: bench_heavyweight
@@ -128,12 +137,7 @@ bench_heavyweight:
 	echo "=== Heavyweight benchmarks: Large/Huge x 7 implementations ==="
 	echo "    $(BENCH_COUNT) runs x 14 benchmarks x $(BENCH_TIME_HEAVY) each (about 15 min with defaults)."
 	echo "    Pauses of 10-30 s between lines are normal; the timestamps show it is still running."
-	for i in $$(seq 1 $(BENCH_COUNT)); do \
-		echo "--- heavy run $$i/$(BENCH_COUNT) ---" | $(TIMESTAMP); \
-		set -o pipefail; \
-		go test -run '^$$' -benchmem -count 1 -benchtime $(BENCH_TIME_HEAVY) -bench Benchmark_heavy ./countline \
-			| tee -a $(BENCH_OUT) | $(TIMESTAMP); \
-	done
+	$(call run_bench_suite,heavy,-benchtime $(BENCH_TIME_HEAVY),Benchmark_heavy)
 	echo "bench_heavyweight: done"
 
 # bench_giant_size is optional and not part of `make bench`: one pass over
@@ -142,13 +146,21 @@ bench_heavyweight:
 bench_giant_size:
 	echo "=== Giant benchmark: 1 GiB x 7 implementations ==="
 	echo "    $(BENCH_COUNT) runs; expect minutes of silence per line. Timestamps show progress."
-	for i in $$(seq 1 $(BENCH_COUNT)); do \
-		echo "--- giant run $$i/$(BENCH_COUNT) ---" | $(TIMESTAMP); \
-		set -o pipefail; \
-		go test -run '^$$' -benchmem -count 1 -bench Benchmark_giant ./countline \
-			| tee -a $(BENCH_OUT) | $(TIMESTAMP); \
-	done
+	$(call run_bench_suite,giant,,Benchmark_giant)
 	echo "bench_giant_size: done"
+
+# bench_vs_wc compares the countline CLI against the system `wc -l` on the
+# 1 GiB test file, using hyperfine. Both warm the OS page cache first, so this
+# measures the line-counting work, not cold-disk reads.
+#
+# Note: requires hyperfine (https://github.com/sharkdp/hyperfine).
+GIANT_FILE := countline/testdata/data_Giant.txt
+.PHONY: bench_vs_wc
+bench_vs_wc: gen_data build
+	type hyperfine >/dev/null 2>&1 || { echo "hyperfine is required: https://github.com/sharkdp/hyperfine"; exit 1; }
+	hyperfine --warmup 3 --runs 10 \
+		--command-name 'countline' './dist/countline $(GIANT_FILE)' \
+		--command-name 'wc -l' 'wc -l < $(GIANT_FILE)'
 
 # kill terminates orphaned benchmark processes. Aborting `make bench` (e.g.
 # Ctrl-C) can leave the compiled `countline.test` binary running in the
@@ -159,21 +171,11 @@ bench_giant_size:
 BENCH_PATTERN := countline\.test.*-test\.bench
 .PHONY: kill
 kill:
-	echo "Searching for orphaned benchmark processes ..."
+	echo "Searching for orphaned benchmark processes ..."; \
 	pids=$$(pgrep -f '$(BENCH_PATTERN)' || true); \
-	if [ -z "$$pids" ]; then \
-		echo "OK ... none found"; \
-	else \
-		echo "killing: $$pids"; \
-		kill $$pids 2>/dev/null || true; \
-		sleep 1; \
-		pids=$$(pgrep -f '$(BENCH_PATTERN)' || true); \
-		if [ -n "$$pids" ]; then \
-			echo "force-killing: $$pids"; \
-			kill -9 $$pids 2>/dev/null || true; \
-		fi; \
-		echo "OK ... killed"; \
-	fi
+	[ -z "$$pids" ] && { echo "OK ... none found"; exit 0; }; \
+	echo "killing: $$pids"; kill $$pids 2>/dev/null || true; sleep 1; \
+	pids=$$(pgrep -f '$(BENCH_PATTERN)' || true); [ -n "$$pids" ] && kill -9 $$pids 2>/dev/null || true; echo "OK ... killed"
 
 # -----------------------------------------------------------------------------
 #  Docker installed only tests for various Go versions

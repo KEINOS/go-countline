@@ -4,18 +4,37 @@
 
 # go-countline
 
-Go package
-"[go-countline](https://github.com/KEINOS/go-countline)" does one thing:
-**count lines in an `io.Reader` quickly**.
+**Blazing-fast line counting for Go.** `go-countline` does one thing — count the lines in an `io.Reader` — and does it at memory speed: a 1 GiB buffer in about 36 ms (~30 GB/s).
 
-Unlike `wc -l`, `go-countline` counts a final line even when the input does not
-end with a line feed.
+On a 1 GiB file it counts lines about **10× faster than `wc -l`** (≈86 ms vs ≈895 ms on an Apple M4). Verify it yourself with `make bench_vs_wc`.
+
+Unlike `wc -l`, it also counts the final line when the input does not end with a line feed.
 
 ## Usage
+
+### As a CLI
+
+Install the command-line wrapper:
+
+```shell
+go install "github.com/KEINOS/go-countline/cmd/countline@latest"
+```
+
+Run it with one file path:
+
+```shell
+countline ./path/to/file.txt
+```
+
+### As a package
+
+Add it to your module:
 
 ```shell
 go get "github.com/KEINOS/go-countline"
 ```
+
+Then pass any `io.Reader` to `CountLines`:
 
 ```go
 import "github.com/KEINOS/go-countline/countline"
@@ -56,49 +75,45 @@ func ExampleCountLines() {
 }
 ```
 
-## Benchmark Status
+## Performance
 
-Performance test on Apple M4, 16 GB RAM:
+Once the bytes are in hand, counting adds almost no overhead — the work is essentially bound by memory bandwidth.
 
-### File I/O (real-world)
+Measured on Apple M4, 16 GB RAM, Go 1.26.
 
-Measures speed with file open and read operations:
+### Versus `wc -l`
 
-| File Size | Speed | Time |
+Counting the 1 GiB test file (`data_Giant.txt`, warm in the page cache) as a command-line tool, via `hyperfine --warmup 3 --runs 10`:
+
+| Tool | Time (mean) | |
 | :-- | :-- | :-- |
-| 1 KiB | 42 MB/s | 24 μs |
-| 1 MiB | 6.5 GB/s | 160 μs |
-| 10 MiB | 9.5 GB/s | 1.1 ms |
-| 50 MiB | 10.3 GB/s | 5.1 ms |
-| 100 MiB | 10.7 GB/s | 9.8 ms |
-| **1 GiB** | **10.5 GB/s** | **102 ms** |
+| **`countline`** | **86 ms** | _baseline_ |
+| `wc -l` | 895 ms | **≈10× slower** |
 
-### In-Memory (fast path)
+Both report the same 72,323,529 lines. `wc` here is the BSD build shipped with macOS; GNU `wc` on Linux uses a faster newline scan, so expect a smaller gap there. Reproduce with `make bench_vs_wc`.
 
-Measures speed with data already in memory:
+### Throughput (file already in the OS page cache)
 
-| File Size | Speed |
-| :-- | :-- |
-| **1 GiB** | **~20 GB/s** |
+The benchmark (`BenchmarkCountLines_IO`, `-count=10`, medians via `benchstat`) re-reads the same file in a loop, so the kernel serves it from RAM. These numbers measure the counting work plus syscall overhead — **not** cold-disk read speed. Reproduce with `make bench`.
 
-> **Note**: File I/O is limited by disk speed. In-memory is faster because no
-> disk access. Use file I/O results for real-world expectations.
+| File Size | Time | Throughput | |
+| :-- | :-- | :-- | :-- |
+| 1 KiB | 13 μs | 82 MB/s | _dominated by `open()` overhead_ |
+| 1 MiB | 58 μs | 18 GB/s | _fits in CPU cache_ |
+| 10 MiB | 0.77 ms | 14 GB/s | |
+| 50 MiB | 4.3 ms | 12 GB/s | |
+| 100 MiB | 9.0 ms | 12 GB/s | |
+| **1 GiB** | **104 ms** | **10 GB/s** | _main-memory bandwidth_ |
+
+### In-memory (`bytes.Reader`, no syscalls)
+
+| File Size | Time | Throughput |
+| :-- | :-- | :-- |
+| **1 GiB** | **36 ms** | **~30 GB/s** |
+
+> **Note**: A first read from cold storage is bound by your disk, not by these figures — expect your SSD/NVMe sequential read speed for uncached files. These results show how little overhead the counting itself adds once the bytes are available.
 
 - [See other alternative implementations](./countline/_alt)
-
-## CLI
-
-Install the command-line wrapper:
-
-```shell
-go install "github.com/KEINOS/go-countline/cmd/countline@latest"
-```
-
-Run it with one file path:
-
-```shell
-countline ./path/to/file.txt
-```
 
 ## Contributing
 
@@ -116,12 +131,10 @@ countline ./path/to/file.txt
 
 **Found a faster way** to count lines? Contributions are welcome.
 
-Alternative implementations live in [`countline/_alt`](./countline/_alt). If an alternative
-passes the shared spec and benchmarks faster, it can replace the main
-implementation in a later release after review.
+Alternative implementations live in [`countline/_alt`](./countline/_alt). If an alternative passes the shared spec and benchmarks faster, it can replace the main implementation in a later release after review.
 
 - [Issues](https://github.com/KEINOS/go-countline/issues): [![Issues](https://img.shields.io/github/issues/KEINOS/go-countline)](https://github.com/KEINOS/go-countline/issues)
   - Please provide a reproducible code snippet.
 - Pull requests: [![Pull Requests](https://img.shields.io/github/issues-pr/KEINOS/go-countline)](https://github.com/KEINOS/go-countline/pulls)
   - Branch: `main`
-  - **Any pull requests for the better is welcome!**
+  - **Any pull request that makes it better is welcome!**
