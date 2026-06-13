@@ -1,13 +1,15 @@
-package cl
+package countline
 
 import (
+	"errors"
 	"strings"
 	"testing"
 
-	"github.com/KEINOS/go-countline/cl/spec"
-	"github.com/pkg/errors"
+	"github.com/KEINOS/go-countline/countline/spec"
 	"github.com/stretchr/testify/require"
 )
+
+var errForcedRead = errors.New("forced error")
 
 // ============================================================================
 //  Tests
@@ -32,7 +34,7 @@ func TestCountLines_nil_input(t *testing.T) {
 type DummyReader struct{}
 
 func (r *DummyReader) Read(_ []byte) (int, error) {
-	return 0, errors.New("forced error")
+	return 0, errForcedRead
 }
 
 func TestCountLines_io_read_fail(t *testing.T) {

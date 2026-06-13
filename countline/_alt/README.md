@@ -2,7 +2,7 @@
 
 This directory contains alternate implementations of the `CountLines` function.
 
-- Current implementation: `cl/cl.go`
+- Current implementation: `countline/countline.go`
 
 New implementations should be added here first. After benchmarking and review,
 the fastest correct implementation may be moved into the main package.
@@ -13,7 +13,7 @@ You need to create and edit the following files:
 
 1. Create a new file for your new implementation.
 2. Add your function to the `TestCountLines_specs` function in [`alt_test.go`](./alt_test.go).
-3. Add your function to `targetFuncions` in [`../cl_benchmark_test.go`](../cl_benchmark_test.go).
+3. Add your function to `targetFuncions` in [`../countline_benchmark_test.go`](../countline_benchmark_test.go).
 
 ### Create a file
 
@@ -52,7 +52,7 @@ func TestCountLines_specs(t *testing.T) {
 
 ### Add the function to the benchmark list
 
-- File name: `../cl_benchmark_test.go`
+- File name: `../countline_benchmark_test.go`
 
 ```diff
 var targetFuncions = map[string]struct {
@@ -73,7 +73,7 @@ var targetFuncions = map[string]struct {
 
 You need the following to be covered in your implementation:
 
-- **Pass the tests** in all cases of [`cl/spec/spec.go`](../spec/spec.go).
+- **Pass the tests** in all cases of [`countline/spec/spec.go`](../spec/spec.go).
 - **Pass the lint and static analysis checks** of [golangci-lint](https://golangci-lint.run/).
   - Run: `golangci-lint run`
   - For the rules, see: [../../.golangci.yml](../../.golangci.yml)

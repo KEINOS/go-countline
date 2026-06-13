@@ -6,9 +6,15 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/pkg/errors"
+	"errors"
 	"github.com/stretchr/testify/require"
 	"github.com/zenizh/go-capturer"
+)
+
+var (
+	errForcedClose = errors.New("forced close error")
+	errForcedFlush = errors.New("forced flush error")
+	errForcedExit  = errors.New("forced error")
 )
 
 //nolint:paralleltest // do not parallelize due to temporary changing the global variable
@@ -87,7 +93,7 @@ func Test_exitOnError(t *testing.T) {
 	}
 
 	out := capturer.CaptureStderr(func() {
-		exitOnError(errors.New("forced error"))
+		exitOnError(errForcedExit)
 	})
 
 	require.Equal(t, 1, capturedStatus, "it should exit with status 1")
@@ -164,7 +170,7 @@ func Test_genFile_close_error(t *testing.T) {
 
 	createFile = func(_ string) (io.WriteCloser, error) {
 		return &fakeWriteCloser{
-			closeErr: errors.New("forced close error"),
+			closeErr: errForcedClose,
 			writeErr: nil,
 		}, nil
 	}
@@ -197,7 +203,7 @@ func Test_genFile_flush_error(t *testing.T) {
 	}
 	newBufferedWriter = func(_ io.Writer) bufferedWriter {
 		return &fakeBufferedWriter{
-			flushErr: errors.New("forced flush error"),
+			flushErr: errForcedFlush,
 			writeErr: nil,
 		}
 	}
@@ -227,8 +233,8 @@ func Test_genFile_flush_error_with_existing_error(t *testing.T) {
 	}
 	newBufferedWriter = func(_ io.Writer) bufferedWriter {
 		return &fakeBufferedWriter{
-			flushErr: errors.New("forced flush error"),
-			writeErr: errors.New("forced write error"),
+			flushErr: errForcedFlush,
+			writeErr: errForcedWrite,
 		}
 	}
 
@@ -251,13 +257,13 @@ func Test_genFile_close_error_with_existing_error(t *testing.T) {
 
 	createFile = func(_ string) (io.WriteCloser, error) {
 		return &fakeWriteCloser{
-			closeErr: errors.New("forced close error"),
+			closeErr: errForcedClose,
 			writeErr: nil,
 		}, nil
 	}
 	newBufferedWriter = func(_ io.Writer) bufferedWriter {
 		return &fakeBufferedWriter{
-			flushErr: errors.New("forced flush error"),
+			flushErr: errForcedFlush,
 			writeErr: nil,
 		}
 	}

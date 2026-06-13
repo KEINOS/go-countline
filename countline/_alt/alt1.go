@@ -1,20 +1,16 @@
 package alt
 
 import (
+	"fmt"
 	"io"
 
-	"github.com/pkg/errors"
 	"golang.org/x/text/transform"
 )
-
-// ----------------------------------------------------------------------------
-//  CountLinesAlt1
-// ----------------------------------------------------------------------------
 
 // CountLinesAlt1 uses a Transformer to count the number of lines in a file.
 func CountLinesAlt1(inputReader io.Reader) (int, error) {
 	if inputReader == nil {
-		return 0, errors.New("given reader is nil")
+		return 0, errNilReader
 	}
 
 	bufReader := new(LineCounterAlt1)
@@ -22,7 +18,7 @@ func CountLinesAlt1(inputReader io.Reader) (int, error) {
 
 	_, err := io.ReadAll(transformer)
 	if err != nil {
-		return 0, errors.Wrap(err, "failed to read the file")
+		return 0, fmt.Errorf("failed to read the file: %w", err)
 	}
 
 	count := bufReader.Count

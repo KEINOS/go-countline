@@ -2,18 +2,20 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 
-	"github.com/KEINOS/go-countline/cl"
-	"github.com/pkg/errors"
+	"github.com/KEINOS/go-countline/countline"
 )
 
 var msgHelp = `cl - Count the number of lines in a file.
 Usage:
 	cl [file]
 `
+
+var errInvalidArgs = errors.New("invalid number of arguments")
 
 // osExit is a copy of os.Exit() to be able to mock it in tests.
 var osExit = os.Exit
@@ -22,7 +24,7 @@ func main() {
 	const lenArgs = 2 // program name and the file path
 
 	if len(os.Args) != lenArgs {
-		ExitOnError(errors.New("invalid number of arguments"))
+		ExitOnError(errInvalidArgs)
 	}
 
 	pathFile := os.Args[1]
@@ -33,7 +35,7 @@ func main() {
 	osFile, err := os.Open(pathFile)
 	ExitOnError(err)
 
-	count, err := cl.CountLines(osFile)
+	count, err := countline.CountLines(osFile)
 	ExitOnError(err)
 
 	fmt.Println(count)

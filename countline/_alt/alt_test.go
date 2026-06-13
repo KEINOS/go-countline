@@ -17,8 +17,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/KEINOS/go-countline/cl/spec"
-	"github.com/pkg/errors"
+	"github.com/KEINOS/go-countline/countline/spec"
 	"github.com/stretchr/testify/require"
 )
 
@@ -53,7 +52,7 @@ func TestCountLines_specs(t *testing.T) {
 		})
 
 		t.Run(targetFunc.name+"_io_read_fail", func(t *testing.T) {
-			dummyReader := &DummyReader{msg: "forced error"}
+			dummyReader := &DummyReader{}
 
 			numLines, err := targetFunc.fn(dummyReader)
 
@@ -95,12 +94,10 @@ func TestCountLines_overflow(t *testing.T) {
 	}
 }
 
-// DummyReader is a dummy io.Reader that returns an error on Read().
-type DummyReader struct {
-	msg string
-}
+// DummyReader is a dummy io.Reader that always returns errForcedRead on Read().
+type DummyReader struct{}
 
-// Read implements io.Reader interface. This method always returns an error with the msg field.
+// Read implements io.Reader interface. Always returns errForcedRead.
 func (r *DummyReader) Read(_ []byte) (int, error) {
-	return 0, errors.New(r.msg)
+	return 0, errForcedRead
 }

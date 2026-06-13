@@ -18,7 +18,7 @@ go get "github.com/KEINOS/go-countline"
 ```
 
 ```go
-import "github.com/KEINOS/go-countline/cl"
+import "github.com/KEINOS/go-countline/countline"
 
 func ExampleCountLines() {
     for _, sample := range []struct {
@@ -36,7 +36,7 @@ func ExampleCountLines() {
     } {
         readerFile := strings.NewReader(sample.Input)
 
-        count, err := cl.CountLines(readerFile)
+        count, err := countline.CountLines(readerFile)
         if err != nil {
             log.Fatal(err)
         }
@@ -84,7 +84,7 @@ Measures speed with data already in memory:
 > **Note**: File I/O is limited by disk speed. In-memory is faster because no
 > disk access. Use file I/O results for real-world expectations.
 
-- [See other alternative implementations](./cl/_alt)
+- [See other alternative implementations](./countline/_alt)
 
 ## CLI
 
@@ -116,7 +116,7 @@ countline ./path/to/file.txt
 
 **Found a faster way** to count lines? Contributions are welcome.
 
-Alternative implementations live in [`cl/_alt`](./cl/_alt). If an alternative
+Alternative implementations live in [`countline/_alt`](./countline/_alt). If an alternative
 passes the shared spec and benchmarks faster, it can replace the main
 implementation in a later release after review.
 

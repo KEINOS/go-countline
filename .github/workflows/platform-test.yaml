@@ -36,4 +36,4 @@ jobs:
 
       - name: Cleanups
         shell: bash
-        run: rm -rf ./cl/testdata/data_*.txt
+        run: rm -rf ./countline/testdata/data_*.txt

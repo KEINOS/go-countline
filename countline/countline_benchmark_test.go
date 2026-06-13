@@ -8,7 +8,7 @@
 // ```
 //
 //go:generate go run ./_gen
-package cl
+package countline
 
 import (
 	"bytes"
@@ -19,7 +19,7 @@ import (
 	"strings"
 	"testing"
 
-	alt "github.com/KEINOS/go-countline/cl/_alt"
+	alt "github.com/KEINOS/go-countline/countline/_alt"
 	"github.com/stretchr/testify/require"
 )
 

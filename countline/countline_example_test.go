@@ -1,4 +1,4 @@
-package cl_test
+package countline_test
 
 import (
 	"fmt"
@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/KEINOS/go-countline/cl"
+	"github.com/KEINOS/go-countline/countline"
 	"github.com/stretchr/testify/require"
 )
 
@@ -28,7 +28,7 @@ func ExampleCountLines() {
 	} {
 		readerFile := strings.NewReader(sample.Input)
 
-		count, err := cl.CountLines(readerFile)
+		count, err := countline.CountLines(readerFile)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -66,7 +66,7 @@ func BenchmarkCountLines(b *testing.B) {
 	b.ResetTimer() // Begin benchmark
 
 	// Run function
-	actualNumLines, err := cl.CountLines(fileReader)
+	actualNumLines, err := countline.CountLines(fileReader)
 	if err != nil {
 		b.Fatal(err)
 	}

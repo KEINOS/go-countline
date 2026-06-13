@@ -12,7 +12,7 @@
 #      make test_docker ... Run unit tests with different versions of Go in a
 #                           Docker container.
 #  Note:
-#    These tests will generate test data under ./cl/testdata directory. It
+#    These tests will generate test data under ./countline/testdata directory. It
 #    contains GiB size of data, so don't forget to remove them after finish the
 #    test/dev.
 # =============================================================================
@@ -47,7 +47,7 @@ build:
 .PHONY: test
 test: gen_data unit_test lint coverage
 
-# gen_data generates test data under ./cl/testdata directory. It contains GiB size
+# gen_data generates test data under ./countline/testdata directory. It contains GiB size
 # of data, so don't forget to remove them after finish the test/dev.
 .PHONY: gen_data
 gen_data:
@@ -59,16 +59,16 @@ gen_data:
 unit_test: gen_data
 	go test -cover -race -coverprofile=coverage.out \
 		./... \
-		github.com/KEINOS/go-countline/cl/_alt \
-		github.com/KEINOS/go-countline/cl/_gen
+		github.com/KEINOS/go-countline/countline/_alt \
+		github.com/KEINOS/go-countline/countline/_gen
 
 # lint will run lint check and static analysis with golangci-lint.
 # For the configuration see: ../.golangci.yml
 .PHONY: lint
 lint:
 	golangci-lint run --fix || exit 1
-	golangci-lint run --fix ./cl/_alt || exit 1
-	golangci-lint run --fix ./cl/_gen || exit 1
+	golangci-lint run --fix ./countline/_alt || exit 1
+	golangci-lint run --fix ./countline/_gen || exit 1
 
 # coverage will fail if the total coverage is not 100%.
 .PHONY: coverage
@@ -82,26 +82,28 @@ coverage: unit_test
 #   $ go install golang.org/x/perf/cmd/benchstat@latest
 .PHONY: bench
 bench: gen_data bench_lightweight bench_heavyweight
-	echo "Benchmark results:"
-	benchstat -filter ".name:/giant/" bench.txt > bench_giant.txt
+	@echo "Benchmark results:"
+	@benchstat -filter ".name:/giant/" bench.txt > bench_giant.txt
 
 .PHONY: bench_lightweight
 bench_lightweight:
-	printf "Benchmarking with light weight datas ... "
-	go test -benchmem -count 6 -benchtime 10s -bench Benchmark_light ./... > bench.txt
-	echo "OK"
+	@echo "Benchmarking with light weight datas (Tiny/Small/Medium) ..."
+	@echo "(21 sub-benchmarks x 6 counts x 1s each = ~2 min. Each result line appears every ~1s)"
+	go test -benchmem -count 6 -benchtime 1s -bench Benchmark_light ./... | tee bench.txt
+	@echo "bench_lightweight: done"
 
 .PHONY: bench_heavyweight
 bench_heavyweight:
-	printf "Benchmarking with heavy sized datas ... "
-	go test -benchmem -count 6 -bench Benchmark_heavy ./... >> bench.txt
-	echo "OK"
+	@echo "Benchmarking with heavy sized datas (Large/Huge) ..."
+	@echo "(14 sub-benchmarks x 6 counts x 10s each = ~14 min)"
+	go test -benchmem -count 6 -benchtime 10s -bench Benchmark_heavy ./... | tee -a bench.txt
+	@echo "bench_heavyweight: done"
 
 .PHONY: bench_giant_size
 bench_giant_size:
-	printf "Benchmarking with a giant size data ... "
+	@echo "Benchmarking with a giant size data (1 GiB) ..."
 	go test -benchmem -count 6 -bench Benchmark_giant ./... | tee -a bench.txt
-	echo "OK"
+	@echo "bench_giant_size: done"
 
 # -----------------------------------------------------------------------------
 #  Docker installed only tests for various Go versions

@@ -1,14 +1,21 @@
-package cl
+package countline
 
 import (
 	"bufio"
 	"bytes"
+	"errors"
+	"fmt"
 	"io"
-
-	"github.com/pkg/errors"
 )
 
-const errLineCountOverflow = "number of lines exceeds the maximum value of int"
+// ErrNilReader is returned when a nil reader is passed to CountLines.
+var ErrNilReader = errors.New("given reader is nil")
+
+// ErrLineCountOverflow is returned when the line count exceeds the maximum int value.
+var ErrLineCountOverflow = errors.New("number of lines exceeds the maximum value of int")
+
+// ErrReadFailed is returned when reading from the reader fails.
+var ErrReadFailed = errors.New("failed to read from reader")
 
 // CountLines counts LF-delimited lines from inputReader.
 //
@@ -22,7 +29,7 @@ func CountLines(inputReader io.Reader) (int, error) {
 
 func countLines(inputReader io.Reader, maxInt uint) (int, error) {
 	if inputReader == nil {
-		return 0, errors.New("given reader is nil")
+		return 0, ErrNilReader
 	}
 
 	buf := make([]byte, bufio.MaxScanTokenSize)
@@ -51,7 +58,7 @@ func countLines(inputReader io.Reader, maxInt uint) (int, error) {
 				break
 			}
 
-			return 0, errors.Wrap(err, "failed to read from reader")
+			return 0, fmt.Errorf("%w: %w", ErrReadFailed, err)
 		}
 	}
 
@@ -67,7 +74,7 @@ func countLines(inputReader io.Reader, maxInt uint) (int, error) {
 
 func addLineBreaks(count *uint, found, maxInt uint) error {
 	if found > maxInt || *count > maxInt-found {
-		return errors.New(errLineCountOverflow)
+		return ErrLineCountOverflow
 	}
 
 	*count += found
@@ -77,7 +84,7 @@ func addLineBreaks(count *uint, found, maxInt uint) error {
 
 func addFinalLine(count *uint, maxInt uint) error {
 	if *count == maxInt {
-		return errors.New(errLineCountOverflow)
+		return ErrLineCountOverflow
 	}
 
 	*count++

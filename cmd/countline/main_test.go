@@ -5,10 +5,12 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/pkg/errors"
+	"errors"
 	"github.com/stretchr/testify/require"
 	"github.com/zenizh/go-capturer"
 )
+
+var errTestError = errors.New("test error")
 
 //nolint:paralleltest // do not parallelize due to temporary changing global variables
 func Test_main(t *testing.T) {
@@ -26,7 +28,7 @@ func Test_main(t *testing.T) {
 		capturedCode = code
 	}
 
-	pathData := filepath.Join("..", "..", "cl", "testdata", "data_Giant.txt")
+	pathData := filepath.Join("..", "..", "countline", "testdata", "data_Giant.txt")
 	expect := "72323529"
 
 	os.Args = []string{t.Name(), pathData}
@@ -87,7 +89,7 @@ func TestExitOnError(t *testing.T) {
 	}
 
 	out := capturer.CaptureStderr(func() {
-		ExitOnError(errors.New("test error"))
+		ExitOnError(errTestError)
 	})
 
 	require.Equal(t, 1, capturedCode, "exit code should be 1")

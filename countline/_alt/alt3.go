@@ -2,20 +2,15 @@ package alt
 
 import (
 	"bufio"
+	"fmt"
 	"io"
-
-	"github.com/pkg/errors"
 )
-
-// ----------------------------------------------------------------------------
-//  CountLinesAlt3
-// ----------------------------------------------------------------------------
 
 // CountLinesAlt3 is the 3rd attempt to count the number of lines in a file using
 // bufio.Reader without goroutines.
 func CountLinesAlt3(inputReader io.Reader) (int, error) {
 	if inputReader == nil {
-		return 0, errors.New("given reader is nil")
+		return 0, errNilReader
 	}
 
 	bufReader := bufio.NewReader(inputReader)
@@ -41,13 +36,13 @@ func CountLinesAlt3(inputReader io.Reader) (int, error) {
 	}
 
 	for {
-		numRead, err := bufReader.Read(buf) // loading chunk into buffer
+		numRead, err := bufReader.Read(buf)
 		if err != nil {
 			if err == io.EOF {
 				break
 			}
 
-			return 0, errors.Wrap(err, "failed to read from reader")
+			return 0, fmt.Errorf("failed to read from reader: %w", err)
 		}
 
 		if numRead > 0 {
