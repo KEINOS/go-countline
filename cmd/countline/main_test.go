@@ -28,8 +28,12 @@ func Test_main(t *testing.T) {
 		capturedCode = code
 	}
 
-	pathData := filepath.Join("..", "..", "countline", "testdata", "data_Giant.txt")
-	expect := "72323529"
+	// Write a small file with a known line count so the test is self-contained
+	// and does not depend on the generated (multi-GiB) test data.
+	pathData := filepath.Join(t.TempDir(), "data.txt")
+	require.NoError(t, os.WriteFile(pathData, []byte("line1\nline2\nline3\n"), 0o600))
+
+	expect := "3"
 
 	os.Args = []string{t.Name(), pathData}
 
