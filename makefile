@@ -16,9 +16,9 @@
 #      make test_docker ... Run unit tests with different versions of Go in a
 #                           Docker container.
 #  Note:
-#    These tests will generate test data under ./countline/testdata directory. It
-#    contains GiB size of data, so don't forget to remove them after finish the
-#    test/dev.
+#    These tests will generate test data under ./countline/testdata directory.
+#    It contains GiB size of data, so don't forget to remove them after finish
+#    the test/dev.
 # =============================================================================
 
 .SILENT:
@@ -33,11 +33,7 @@ check: test
 all: build
 
 .PHONY: clean
-clean: prune
-	echo "removing dist/ ... "
-	rm -rf ./dist/ && echo "OK"
-	echo "removing test artifacts ... "
-	rm -rf bench.txt coverage.out && echo "OK"
+clean: prune rm_artifacts rm_dist
 
 # -----------------------------------------------------------------------------
 #  Build application
@@ -47,6 +43,45 @@ clean: prune
 build:
 	mkdir -p ./dist/
 	go build -o ./dist/countline ./cmd/countline
+
+# -----------------------------------------------------------------------------
+#  Teardown
+# -----------------------------------------------------------------------------
+
+.PHONY: rm_dist
+rm_dist:
+	echo "* removing dist/ ... "
+	rm -rf ./dist/ && echo "OK"
+
+.PHONY: rm_artifacts
+rm_artifacts:
+	echo "* removing test artifacts ... "
+	rm -rf bench.txt coverage.out .temp_* countline/testdata/*.txt && echo "OK"
+
+# prune will remove all pruned containers, images and volumes of Docker.
+#
+# Note: This is for maintenance purpose only. Do not use this unless you know
+#       what you are doing.
+.PHONY: prune
+prune: prune_container prune_image prune_volume
+
+.PHONY: prune_container
+prune_container:
+	printf "* prune container ... "
+	docker container prune -f
+	echo "OK"
+
+.PHONY: prune_image
+prune_image:
+	printf "* prune image ... "
+	docker image prune -f
+	echo "OK"
+
+.PHONY: prune_volume
+prune_volume:
+	printf "* prune volumes ... "
+	docker volume prune -f
+	echo "OK"
 
 # -----------------------------------------------------------------------------
 #  Tests for local run
@@ -171,10 +206,10 @@ bench_vs_wc: gen_data build
 BENCH_PATTERN := countline\.test.*-test\.bench
 .PHONY: kill
 kill:
-	echo "Searching for orphaned benchmark processes ..."; \
+	echo "* Searching for orphaned benchmark processes ..."; \
 	pids=$$(pgrep -f '$(BENCH_PATTERN)' || true); \
 	[ -z "$$pids" ] && { echo "OK ... none found"; exit 0; }; \
-	echo "killing: $$pids"; kill $$pids 2>/dev/null || true; sleep 1; \
+	echo "* killing: $$pids"; kill $$pids 2>/dev/null || true; sleep 1; \
 	pids=$$(pgrep -f '$(BENCH_PATTERN)' || true); [ -n "$$pids" ] && kill -9 $$pids 2>/dev/null || true; echo "OK ... killed"
 
 # -----------------------------------------------------------------------------
@@ -187,16 +222,16 @@ test_docker: build_docker go_min go_latest
 # images for consistency.
 .PHONY: build_docker
 build_docker: pull_image
-	printf "building images ... "
+	printf "* building images ... "
 	docker compose --file ./.github/docker-compose.yml build --progress quiet
 	echo "OK"
 
 .PHONY: pull_image
 pull_image:
 	echo "[Building docker images]:"
-	printf "pulling ... "
+	printf "* pulling ... "
 	docker pull --quiet golang:1.26-alpine
-	printf "pulling ... "
+	printf "* pulling ... "
 	docker pull --quiet golang:alpine
 
 .PHONY: go_min
@@ -210,31 +245,6 @@ go_latest: build_docker
 	echo "[Unit testing in Go latest version]:"
 	docker compose --file ./.github/docker-compose.yml run latest || exit 1
 	echo "ok ... Go latest version"
-
-# prune will remove all pruned containers, images and volumes of Docker.
-#
-# Note: This is for maintenance purpose only. Do not use this unless you know
-#       what you are doing.
-.PHONY: prune
-prune: prune_container prune_image prune_volume
-
-.PHONY: prune_container
-prune_container:
-	printf "prune container ... "
-	docker container prune -f
-	echo "OK"
-
-.PHONY: prune_image
-prune_image:
-	printf "prune image ... "
-	docker image prune -f
-	echo "OK"
-
-.PHONY: prune_volume
-prune_volume:
-	printf "prune volumes ... "
-	docker volume prune -f
-	echo "OK"
 
 # -----------------------------------------------------------------------------
 #  Prequisites
