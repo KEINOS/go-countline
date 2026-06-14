@@ -104,13 +104,40 @@ unit_test: gen_data
 		github.com/KEINOS/go-countline/countline/_alt \
 		github.com/KEINOS/go-countline/countline/_gen
 
+# -----------------------------------------------------------------------------
+#  Lint check and static analysis
+# -----------------------------------------------------------------------------
+
 # lint will run lint check and static analysis with golangci-lint.
 # For the configuration see: ../.golangci.yml
 .PHONY: lint
-lint:
-	golangci-lint run --fix || exit 1
-	golangci-lint run --fix ./countline/_alt || exit 1
-	golangci-lint run --fix ./countline/_gen || exit 1
+lint: lint_go lint_markdown lint_makefile lint_yaml
+
+.PHONY: lint_go
+lint_go:
+	@echo "* Modernizing go syntax..."
+	@go fix ./... && echo "0 issues."
+	@echo "* Running go lint w/fix..."
+	@golangci-lint run --fix --timeout 5m ./... ./countline/_alt ./countline/_gen
+
+.PHONY: lint_markdown
+lint_markdown:
+	@echo "* Running markdown lint w/fix..."
+	@markdownlint-cli2 --fix "**/*.md" 1>/dev/null && echo "0 issues."
+
+.PHONY: lint_makefile
+lint_makefile:
+	@echo "* Running Makefile lint..."
+	@checkmake Makefile && echo "0 issues."
+
+.PHONY: lint_yaml
+lint_yaml:
+	@echo "* Running YAML formatter w/fix..."
+	@yamlfmt .golangci.yml .markdownlint-cli2.yaml .yamlfmt ./.github/ ./.github/workflows/ && echo "0 issues."
+
+# -----------------------------------------------------------------------------
+#  Coverage check
+# -----------------------------------------------------------------------------
 
 # coverage will fail if the total coverage is not 100%.
 .PHONY: coverage

@@ -27,11 +27,10 @@ func main() {
 		exitOnError(errInvalidArgs)
 	}
 
-	pathFile, err := filepath.Abs(filepath.Clean(os.Args[1]))
+	pathFile, err := filepath.Abs(os.Args[1])
 	exitOnError(err)
 
-	//nolint:gosec // due to the nature of CLI, allow opening any file
-	osFile, err := os.Open(pathFile)
+	osFile, err := os.Open(filepath.Clean(pathFile))
 	exitOnError(err)
 
 	count, err := countline.CountLines(osFile)
