@@ -30,7 +30,7 @@ services:
     volumes:
       - ..:/workspaces
       - TEST_DATA:/workspaces/countline/testdata
-    entrypoint: [ "./.github/run_go_mod_tidy.sh" ]
+    entrypoint: ["./.github/run_go_mod_tidy.sh"]
   # Service min runs the tests on minimum supported Go version
   min:
     build:

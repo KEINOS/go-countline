@@ -4,9 +4,9 @@
 
 # go-countline
 
-**Blazing-fast line counting for Go.** `go-countline` does one thing — count the lines in an `io.Reader` — and does it at memory speed: a 1 GiB buffer in about 36 ms (~30 GB/s).
+**Blazing-fast line counting for Go.** `go-countline` does one thing — count the lines in an `io.Reader` — and does it at memory speed: a 1 GiB buffer in about 13 ms (~85 GB/s). For large files and in-memory readers it counts concurrently across CPU cores; small inputs and streaming readers use a serial fallback.
 
-On a 1 GiB file it counts lines about **10× faster than `wc -l`** (≈86 ms vs ≈895 ms on an Apple M4). Verify it yourself with `make bench_vs_wc`.
+On a 1 GiB file it counts lines about **32× faster than `wc -l`** (≈26 ms vs ≈820 ms on an Apple M4). Verify it yourself with `make bench_vs_wc`.
 
 Unlike `wc -l`, it also counts the final line when the input does not end with a line feed.
 
@@ -77,9 +77,9 @@ func ExampleCountLines() {
 
 ## Performance
 
-Once the bytes are in hand, counting adds almost no overhead — the work is essentially bound by memory bandwidth.
+Counting itself is cheap (a SIMD `bytes.Count`); the work is bound by memory bandwidth. For inputs of 4 MiB or more that support random access, the input is split into regions counted in parallel across CPU cores, so throughput scales past a single core's bandwidth. Smaller inputs and non-seekable readers (pipes, sockets) use a serial stream.
 
-Measured on Apple M4, 16 GB RAM, Go 1.26.
+Measured on Apple M4 (10 cores), 16 GB RAM, Go 1.26.
 
 ### Versus `wc -l`
 
@@ -87,29 +87,29 @@ Counting the 1 GiB test file (`data_Giant.txt`, warm in the page cache) as a com
 
 | Tool | Time (mean) | |
 | :-- | :-- | :-- |
-| **`countline`** | **86 ms** | _baseline_ |
-| `wc -l` | 895 ms | **≈10× slower** |
+| **`countline`** | **26 ms** | _baseline_ |
+| `wc -l` | 823 ms | **≈32× slower** |
 
 Both report the same 72,323,529 lines. `wc` here is the BSD build shipped with macOS; GNU `wc` on Linux uses a faster newline scan, so expect a smaller gap there. Reproduce with `make bench_vs_wc`.
 
 ### Throughput (file already in the OS page cache)
 
-The benchmark (`BenchmarkCountLines_IO`, `-count=10`, medians via `benchstat`) re-reads the same file in a loop, so the kernel serves it from RAM. These numbers measure the counting work plus syscall overhead — **not** cold-disk read speed. Reproduce with `make bench`.
+The benchmark (`BenchmarkCountLines_IO`, `-count=6` medians) re-reads the same file in a loop, so the kernel serves it from RAM. These numbers measure the counting work plus syscall overhead — **not** cold-disk read speed. Reproduce with `make bench`.
 
 | File Size | Time | Throughput | |
 | :-- | :-- | :-- | :-- |
-| 1 KiB | 13 μs | 82 MB/s | _dominated by `open()` overhead_ |
-| 1 MiB | 58 μs | 18 GB/s | _fits in CPU cache_ |
-| 10 MiB | 0.77 ms | 14 GB/s | |
-| 50 MiB | 4.3 ms | 12 GB/s | |
-| 100 MiB | 9.0 ms | 12 GB/s | |
-| **1 GiB** | **104 ms** | **10 GB/s** | _main-memory bandwidth_ |
+| 1 KiB | 12 μs | 89 MB/s | _serial; dominated by `open()` overhead_ |
+| 1 MiB | 53 μs | 20 GB/s | _serial; fits in CPU cache_ |
+| 10 MiB | 0.34 ms | 31 GB/s | _parallel_ |
+| 50 MiB | 1.4 ms | 37 GB/s | _parallel_ |
+| 100 MiB | 2.6 ms | 41 GB/s | _parallel_ |
+| **1 GiB** | **23 ms** | **~47 GB/s** | _parallel_ |
 
 ### In-memory (`bytes.Reader`, no syscalls)
 
 | File Size | Time | Throughput |
 | :-- | :-- | :-- |
-| **1 GiB** | **36 ms** | **~30 GB/s** |
+| **1 GiB** | **13 ms** | **~85 GB/s** |
 
 > **Note**: A first read from cold storage is bound by your disk, not by these figures — expect your SSD/NVMe sequential read speed for uncached files. These results show how little overhead the counting itself adds once the bytes are available.
 
