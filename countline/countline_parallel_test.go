@@ -88,6 +88,18 @@ func TestCountLines_non_seekable_random_reader(t *testing.T) {
 	require.Zero(t, reader.Len(), "non-seekable reader must be counted serially and consumed")
 }
 
+// Test_boundedWorkerCount covers both the clamped and unclamped branches
+// deterministically, independent of the host CPU count (GOMAXPROCS), so
+// coverage does not depend on how many cores the test runner has.
+func Test_boundedWorkerCount(t *testing.T) {
+	t.Parallel()
+
+	// More procs than the span needs: clamp to one worker per minBytesPerWorker.
+	require.Equal(t, 4, boundedWorkerCount(4*minBytesPerWorker, 16))
+	// Fewer procs than the cap: use all procs.
+	require.Equal(t, 2, boundedWorkerCount(4*minBytesPerWorker, 2))
+}
+
 // ----------------------------------------------------------------------------
 //  Parallel path (*os.File) - end-to-end with a real file above the threshold
 // ----------------------------------------------------------------------------

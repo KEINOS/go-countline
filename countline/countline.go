@@ -194,9 +194,18 @@ func countParallel(reader randomReader, start, size int64, maxInt uint) (int, er
 // is >= parallelThreshold (which is >= minBytesPerWorker), the result is always
 // at least one.
 func workerCount(span int64) int {
-	// Clamp in int64 so the final value is always small (<= GOMAXPROCS) before
-	// the conversion to int, avoiding any truncation on 32-bit platforms.
-	workers := int64(runtime.GOMAXPROCS(0))
+	return boundedWorkerCount(span, runtime.GOMAXPROCS(0))
+}
+
+// boundedWorkerCount caps procs so each worker handles at least
+// minBytesPerWorker bytes. It is split out from workerCount so both the clamped
+// and unclamped branches can be unit-tested without depending on the host CPU
+// count — otherwise the clamp only runs when GOMAXPROCS exceeds the span's
+// worker cap, leaving that branch uncovered on low-core CI runners.
+func boundedWorkerCount(span int64, procs int) int {
+	// Clamp in int64 so the final value is always small (<= procs) before the
+	// conversion to int, avoiding any truncation on 32-bit platforms.
+	workers := int64(procs)
 
 	if capBySize := span / minBytesPerWorker; capBySize < workers {
 		workers = capBySize
