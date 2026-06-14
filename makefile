@@ -128,7 +128,7 @@ lint_markdown:
 .PHONY: lint_makefile
 lint_makefile:
 	@echo "* Running Makefile lint..."
-	@checkmake Makefile && echo "0 issues."
+	@checkmake makefile && echo "0 issues."
 
 .PHONY: lint_yaml
 lint_yaml:
